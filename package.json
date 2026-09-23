@@ -25,13 +25,10 @@
     "esbuild": true
   },
   "devDependencies": {
-<<<<<<< HEAD
     "@eslint/js": "^10.0.1",
     "eslint": "^10.11.0",
     "eslint-plugin-astro": "^3.2.1",
-    "typescript-eslint": "^8.70.1",
-=======
->>>>>>> ad44191b5481e2471f52c920ab14a02fd4d00d98
+    "typescript-eslint": "^8.70.1", 
     "vitest": "^5.0.1"
   }
 }
