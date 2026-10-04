@@ -15,93 +15,41 @@ const posts = (await getCollection('blog')).sort(
 <!doctype html>
 <html lang="en">
 	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-		<style>
-			main {
-				width: 960px;
-			}
-			ul {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 2rem;
-				list-style-type: none;
-				margin: 0;
-				padding: 0;
-			}
-			ul li {
-				width: calc(50% - 1rem);
-			}
-			ul li * {
-				text-decoration: none;
-				transition: 0.2s ease;
-			}
-			ul li:first-child {
-				width: 100%;
-				margin-bottom: 1rem;
-				text-align: center;
-			}
-			ul li:first-child img {
-				width: 100%;
-			}
-			ul li:first-child .title {
-				font-size: 2.369rem;
-			}
-			ul li img {
-				margin-bottom: 0.5rem;
-				border-radius: 12px;
-			}
-			ul li a {
-				display: block;
-			}
-			.title {
-				margin: 0;
-				color: rgb(var(--black));
-				line-height: 1;
-			}
-			.date {
-				margin: 0;
-				color: rgb(var(--gray));
-			}
-			ul li a:hover h4,
-			ul li a:hover .date {
-				color: rgb(var(--accent));
-			}
-			ul a:hover img {
-				box-shadow: var(--box-shadow);
-			}
-			@media (max-width: 720px) {
-				ul {
-					gap: 0.5em;
-				}
-				ul li {
-					width: 100%;
-					text-align: center;
-				}
-				ul li:first-child {
-					margin-bottom: 0;
-				}
-				ul li:first-child .title {
-					font-size: 1.563em;
-				}
-			}
-		</style>
+		<BaseHead title={`Journal | ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
 	</head>
 	<body>
 		<Header />
 		<main>
-			<section>
-				<ul>
+			<section class="journal" aria-labelledby="journal-title">
+				<p class="eyebrow"><span aria-hidden="true">02 /</span> THE JOURNAL</p>
+				<div class="journal-heading">
+					<div>
+						<h1 id="journal-title">Notes from the process<span>.</span></h1>
+						<p class="intro">Projects, experiments, coursework, and useful things I’ve learned along the way.</p>
+					</div>
+					<a class="profile-link" href="https://github.com/DandarGaming" target="_blank" rel="me noopener noreferrer">
+						More on GitHub <span aria-hidden="true">↗</span>
+					</a>
+				</div>
+
+				<ul class="post-list">
 					{
-						posts.map((post) => (
+						posts.map((post, index) => (
 							<li>
-								<a href={`/blog/${post.id}/`}>
-									{post.data.heroImage && (
-										<Image width={720} height={360} src={post.data.heroImage} alt="" />
-									)}
-									<h4 class="title">{post.data.title}</h4>
-									<p class="date">
-										<FormattedDate date={post.data.pubDate} />
-									</p>
+								<a class="post-card" href={`/blog/${post.id}/`}>
+									<span class="post-number">{String(index + 1).padStart(2, '0')}</span>
+									<span class="post-copy">
+										<span class="post-date"><FormattedDate date={post.data.pubDate} /></span>
+										<span class="post-title">{post.data.title}</span>
+										<span class="post-description">{post.data.description}</span>
+										<span class="read-link">Read entry <span aria-hidden="true">→</span></span>
+									</span>
+									{
+										post.data.heroImage && (
+											<Image class="post-image" width={360} height={220} src={post.data.heroImage} alt="" />
+										)
+									}
+									<span class="post-arrow" aria-hidden="true">↗</span>
 								</a>
 							</li>
 						))
@@ -112,3 +60,171 @@ const posts = (await getCollection('blog')).sort(
 		<Footer />
 	</body>
 </html>
+
+<style>
+	.journal {
+		width: min(960px, 100%);
+		margin-inline: auto;
+	}
+
+	.eyebrow {
+		margin: 0 0 16px;
+		color: #9ba4b7;
+		font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+		font-size: 0.67rem;
+		letter-spacing: 0.12em;
+	}
+
+	.eyebrow span {
+		color: var(--signal-red);
+	}
+
+	.journal-heading {
+		display: flex;
+		align-items: end;
+		justify-content: space-between;
+		gap: 28px;
+		margin-bottom: 42px;
+	}
+
+	h1 {
+		margin-bottom: 12px;
+		font-size: clamp(2.4rem, 6vw, 4.25rem);
+	}
+
+	h1 span {
+		color: var(--signal-red);
+	}
+
+	.intro {
+		max-width: 630px;
+		margin: 0;
+		color: #aab3c5;
+	}
+
+	.profile-link {
+		margin-bottom: 8px;
+		font-size: 0.82rem;
+		text-decoration: none;
+		white-space: nowrap;
+	}
+
+	.profile-link span {
+		margin-left: 5px;
+		color: var(--signal-red);
+	}
+
+	.post-list {
+		margin: 0;
+		padding: 0;
+		border-top: 1px solid #252a37;
+		list-style: none;
+	}
+
+	.post-list li {
+		border-bottom: 1px solid #252a37;
+	}
+
+	.post-card {
+		display: grid;
+		grid-template-columns: 46px minmax(0, 1fr) minmax(140px, 220px) 22px;
+		align-items: center;
+		gap: 20px;
+		padding: 22px 8px;
+		color: inherit;
+		text-decoration: none;
+		transition: background 160ms ease;
+	}
+
+	.post-card:hover {
+		background: #10131b;
+	}
+
+	.post-number {
+		align-self: start;
+		padding-top: 2px;
+		color: var(--signal-red);
+		font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+		font-size: 0.75rem;
+	}
+
+	.post-copy {
+		display: flex;
+		flex-direction: column;
+		align-items: start;
+	}
+
+	.post-date {
+		margin-bottom: 6px;
+		color: #8791a4;
+		font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+		font-size: 0.68rem;
+	}
+
+	.post-title {
+		color: #f4f6fb;
+		font-size: 1.3rem;
+		font-weight: 700;
+		letter-spacing: -0.025em;
+		line-height: 1.3;
+	}
+
+	.post-description {
+		margin-top: 5px;
+		color: #aab3c5;
+		font-size: 0.86rem;
+		line-height: 1.55;
+	}
+
+	.read-link {
+		margin-top: 10px;
+		color: var(--accent);
+		font-size: 0.75rem;
+	}
+
+	.read-link span {
+		color: var(--signal-red);
+	}
+
+	.post-image {
+		width: 100%;
+		height: 132px;
+		margin: 0;
+		border: 1px solid #252a37;
+		border-radius: 3px;
+		object-fit: cover;
+		filter: saturate(0.74);
+		transition:
+			filter 180ms ease,
+			border-color 180ms ease;
+	}
+
+	.post-card:hover .post-image {
+		border-color: var(--accent);
+		filter: saturate(1);
+	}
+
+	.post-arrow {
+		align-self: start;
+		color: var(--accent);
+	}
+
+	@media (max-width: 700px) {
+		.journal-heading {
+			align-items: start;
+			flex-direction: column;
+			gap: 12px;
+			margin-bottom: 30px;
+		}
+
+		.post-card {
+			grid-template-columns: 32px minmax(0, 1fr) 20px;
+			gap: 12px;
+			padding: 19px 4px;
+		}
+
+		.post-image {
+			display: none;
+		}
+	}
+</style>
