@@ -3,10 +3,11 @@ import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
+import { Construct } from 'constructs';
 import * as path from 'node:path';
 
 export class StaticSiteStack extends cdk.Stack {
-	constructor(scope: cdk.App, id: string, props?: cdk.StackProps) {
+	constructor(scope: Construct, id: string, props?: cdk.StackProps) {
 		super(scope, id, props);
 
 		const siteBucket = new s3.Bucket(this, 'SiteBucket', {

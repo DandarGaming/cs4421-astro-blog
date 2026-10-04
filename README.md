@@ -54,6 +54,46 @@ All commands are run from the root of the project, from a terminal:
 | `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
 | `npm run astro -- --help` | Get help using the Astro CLI                     |
 
+## AWS deployment
+
+The CDK app defines an AWS CodePipeline that watches `main` in
+`dandargaming/cs4421-astro-blog`. Each push builds the Astro site, synthesizes
+the CDK app, and deploys the `StaticSiteStack` to S3 and CloudFront. GitHub
+Actions only runs validation; AWS credentials are not stored in GitHub.
+
+### One-time setup
+
+1. In the AWS Console, create an **AWS CodeConnections** connection (formerly
+   CodeStar Connections) to GitHub and complete the GitHub authorization. Wait
+   until the connection status is **Available**, then copy its ARN.
+2. Configure AWS credentials locally with permission to bootstrap CDK and
+   create the pipeline and its resources. For an access key, set its values
+   only in your local PowerShell session; do not paste them into source files
+   or commit them. Prefer temporary credentials or an AWS CLI profile when
+   available.
+3. In PowerShell, set the credentials, account, region, and authorized
+   connection ARN, then from the repository root bootstrap the selected AWS
+   account and region and deploy the pipeline:
+
+   ```powershell
+   $env:AWS_ACCESS_KEY_ID = "YOUR_ACCESS_KEY_ID"
+   $env:AWS_SECRET_ACCESS_KEY = "YOUR_SECRET_ACCESS_KEY"
+   $env:CDK_DEFAULT_ACCOUNT = "YOUR_ACCOUNT_ID"
+   $env:CDK_DEFAULT_REGION = "YOUR_AWS_REGION"
+   $env:GITHUB_CONNECTION_ARN = "arn:aws:codestar-connections:REGION:ACCOUNT_ID:connection/CONNECTION_ID"
+   cd cdk
+   npx cdk bootstrap
+   npx cdk deploy AstroBlogPipelineStack
+   ```
+
+   Use your real connection ARN. Both commands must use the same AWS account
+   and region; the CDK app requires the connection ARN for either command.
+
+After the pipeline is deployed, pushes to `main` trigger site deployments.
+The first deployment may take several minutes. The `StaticSiteStack` uses the
+same stack name as the original CDK site stack, so deploy into its existing
+AWS account and region if you already deployed the site.
+
 ## 👀 Want to learn more?
 
 Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
