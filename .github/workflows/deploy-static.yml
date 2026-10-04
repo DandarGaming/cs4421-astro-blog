@@ -1,7 +1,10 @@
-name: Deploy static site
+name: Validate site
 
 on:
   push:
+    branches:
+      - main
+  pull_request:
     branches:
       - main
 
@@ -9,7 +12,7 @@ permissions:
   contents: read
 
 jobs:
-  deploy:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -21,23 +24,12 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Install Astro dependencies
+      - name: Install dependencies
         run: npm ci
 
       - name: Build Astro site
         run: npm run build
 
-      - name: Install CDK dependencies
-        run: npm ci
-        working-directory: cdk
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
-
-      - name: Deploy CDK stack
-        run: npx cdk deploy --require-approval never
+      - name: Install and compile CDK app
+        run: npm ci && npm run build
         working-directory: cdk
