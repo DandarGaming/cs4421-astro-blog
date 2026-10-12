@@ -26,12 +26,12 @@ export class DeploymentPipelineStack extends cdk.Stack {
 
 		const pipeline = new pipelines.CodePipeline(this, 'Pipeline', {
 			pipelineName: 'AstroBlogDeployment',
-			pipelineType: codepipeline.PipelineType.V1,
+			pipelineType: codepipeline.PipelineType.V2,
 			synth: new pipelines.CodeBuildStep('Synth', {
 				input: pipelines.CodePipelineSource.connection(
 					'dandargaming/cs4421-astro-blog',
 					'main',
-					{ connectionArn },
+					{ connectionArn, triggerOnPush: true },
 				),
 				commands: [
 					'npm ci',

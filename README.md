@@ -60,6 +60,8 @@ The CDK app defines an AWS CodePipeline that watches `main` in
 `dandargaming/cs4421-astro-blog`. Each push builds the Astro site, synthesizes
 the CDK app, and deploys the `StaticSiteStack` to S3 and CloudFront. GitHub
 Actions only runs validation; AWS credentials are not stored in GitHub.
+The pipeline uses CodePipeline V2 push triggers, which are billed per action
+execution minute; see [AWS CodePipeline pricing](https://aws.amazon.com/codepipeline/pricing/).
 
 The production site is statically generated. Blog post routes are rendered
 during the build, and the CloudFront distribution rewrites clean URLs to their
