@@ -1,6 +1,6 @@
 # ADR-001: Transition to SSR and Containers
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-002](./ADR-002-static-s3-cloudfront.md)
 - **Date:** 2026-10-07
 
 ## Context

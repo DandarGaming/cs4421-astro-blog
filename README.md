@@ -61,6 +61,11 @@ The CDK app defines an AWS CodePipeline that watches `main` in
 the CDK app, and deploys the `StaticSiteStack` to S3 and CloudFront. GitHub
 Actions only runs validation; AWS credentials are not stored in GitHub.
 
+The production site is statically generated. Blog post routes are rendered
+during the build, and the CloudFront distribution rewrites clean URLs to their
+generated `index.html` files. Request-time server rendering and runtime
+process-health details are not available on this S3 deployment.
+
 ### One-time setup
 
 1. In the AWS Console, create an **AWS CodeConnections** connection (formerly

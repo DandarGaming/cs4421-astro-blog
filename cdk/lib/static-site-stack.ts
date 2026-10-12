@@ -15,11 +15,44 @@ export class StaticSiteStack extends cdk.Stack {
 			autoDeleteObjects: true,
 		});
 
+		const routeRewrite = new cloudfront.Function(this, 'RouteRewrite', {
+			code: cloudfront.FunctionCode.fromInline(`
+function handler(event) {
+	var request = event.request;
+	var uri = request.uri;
+
+	if (uri.indexOf('/api/') === 0) {
+		return request;
+	}
+
+	var fileName = uri.substring(uri.lastIndexOf('/') + 1);
+
+	if (fileName.indexOf('.') === -1) {
+		request.uri =
+			uri.charAt(uri.length - 1) === '/' ? uri + 'index.html' : uri + '/index.html';
+	}
+
+	return request;
+}`),
+		});
+
 		const distribution = new cloudfront.Distribution(this, 'SiteDistribution', {
 			defaultBehavior: {
 				origin: origins.S3BucketOrigin.withOriginAccessControl(siteBucket),
+				functionAssociations: [
+					{
+						eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
+						function: routeRewrite,
+					},
+				],
 			},
 			defaultRootObject: 'index.html',
+			errorResponses: [403, 404].map((httpStatus) => ({
+				httpStatus,
+				responseHttpStatus: 404,
+				responsePagePath: '/404.html',
+				ttl: cdk.Duration.minutes(5),
+			})),
 		});
 
 		new s3deploy.BucketDeployment(this, 'DeploySite', {
