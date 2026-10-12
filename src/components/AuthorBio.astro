@@ -44,11 +44,13 @@ const { name, bio, avatar, socialLinks } = Astro.props;
 		display: flex;
 		gap: 1.25em;
 		align-items: flex-start;
+		color: #aab3c5;
 	}
 	.author-avatar {
 		flex: 0 0 auto;
 		width: 96px;
 		height: 96px;
+		border: 1px solid #303747;
 		border-radius: 50%;
 		object-fit: cover;
 	}
@@ -66,6 +68,9 @@ const { name, bio, avatar, socialLinks } = Astro.props;
 		margin: 0;
 		padding: 0;
 		list-style: none;
+	}
+	.social-links a {
+		color: var(--accent);
 	}
 	@media (max-width: 480px) {
 		.author-content {

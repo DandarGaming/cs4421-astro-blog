@@ -1,63 +1,146 @@
 ---
-import AboutHeroImage from '../assets/blog-placeholder-about.jpg';
 import Layout from '../layouts/BlogPost.astro';
 ---
 
 <Layout
-	title="About Me"
-	description="Lorem ipsum dolor sit amet"
-	pubDate={new Date('August 08 2021')}
-	heroImage={AboutHeroImage}
+	title="About Dandar"
+	description="Meet Dandar: ISE student at the University of Limerick and creator of Mizo AI."
+	pubDate={new Date('October 04 2026')}
 >
-	<p>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
-		labore et dolore magna aliqua. Vitae ultricies leo integer malesuada nunc vel risus commodo
-		viverra. Adipiscing enim eu turpis egestas pretium. Euismod elementum nisi quis eleifend quam
-		adipiscing. In hac habitasse platea dictumst vestibulum. Sagittis purus sit amet volutpat. Netus
-		et malesuada fames ac turpis egestas. Eget magna fermentum iaculis eu non diam phasellus
-		vestibulum lorem. Varius sit amet mattis vulputate enim. Habitasse platea dictumst quisque
-		sagittis. Integer quis auctor elit sed vulputate mi. Dictumst quisque sagittis purus sit amet.
+	<div class="profile-intro">
+		<div class="eyebrow">
+			<img
+				class="profile-avatar"
+				src="https://avatars.githubusercontent.com/u/103852756?v=4"
+				alt="Dandar's GitHub profile picture"
+				width="57"
+				height="57"
+			/>
+			<span>A BIT ABOUT ME</span>
+		</div>
+		<p>
+			Hey, I’m Dandar, an ISE student at the University of Limerick and the creator of{' '}
+			<a href="https://github.com/DandarGaming/Mizo" target="_blank" rel="noopener noreferrer">Mizo AI</a>.
+			I like turning ideas into projects, learning by building, and sharing the useful parts of the process.
+		</p>
+		<p>
+			This blog is my notebook along the way: a place for project updates, technical experiments,
+			coursework discoveries, and things I’d like to remember.
+		</p>
+	</div>
+
+	<h2>Things I’m building</h2>
+	<ul class="project-list">
+		<li>
+			<a href="https://github.com/DandarGaming/Mizo" target="_blank" rel="noopener noreferrer">Mizo AI</a>
+			<span>My AI project. Check GitHub for the code and current details.</span>
+		</li>
+		<li>
+			<a href="https://github.com/DandarGaming/portfolio" target="_blank" rel="noopener noreferrer">Portfolio</a>
+			<span>A home for my projects and work.</span>
+		</li>
+	</ul>
+
+	<h2>Tools I’ve been exploring</h2>
+	<p class="skill-list" aria-label="Programming languages and technologies">
+		<span>Java</span>
+		<span>JavaScript</span>
+		<span>Python</span>
+		<span>TensorFlow</span>
+		<span>CSS</span>
 	</p>
 
-	<p>
-		Morbi tristique senectus et netus. Id semper risus in hendrerit gravida rutrum quisque non
-		tellus. Habitasse platea dictumst quisque sagittis purus sit amet. Tellus molestie nunc non
-		blandit massa. Cursus vitae congue mauris rhoncus. Accumsan tortor posuere ac ut. Fringilla urna
-		porttitor rhoncus dolor. Elit ullamcorper dignissim cras tincidunt lobortis. In cursus turpis
-		massa tincidunt dui ut ornare lectus. Integer feugiat scelerisque varius morbi enim nunc.
-		Bibendum neque egestas congue quisque egestas diam. Cras ornare arcu dui vivamus arcu felis
-		bibendum. Dignissim suspendisse in est ante in nibh mauris. Sed tempus urna et pharetra pharetra
-		massa massa ultricies mi.
-	</p>
-
-	<p>
-		Mollis nunc sed id semper risus in. Convallis a cras semper auctor neque. Diam sit amet nisl
-		suscipit. Lacus viverra vitae congue eu consequat ac felis donec. Egestas integer eget aliquet
-		nibh praesent tristique magna sit amet. Eget magna fermentum iaculis eu non diam. In vitae
-		turpis massa sed elementum. Tristique et egestas quis ipsum suspendisse ultrices. Eget lorem
-		dolor sed viverra ipsum. Vel turpis nunc eget lorem dolor sed viverra. Posuere ac ut consequat
-		semper viverra nam. Laoreet suspendisse interdum consectetur libero id faucibus. Diam phasellus
-		vestibulum lorem sed risus ultricies tristique. Rhoncus dolor purus non enim praesent elementum
-		facilisis. Ultrices tincidunt arcu non sodales neque. Tempus egestas sed sed risus pretium quam
-		vulputate. Viverra suspendisse potenti nullam ac tortor vitae purus faucibus ornare. Fringilla
-		urna porttitor rhoncus dolor purus non. Amet dictum sit amet justo donec enim.
-	</p>
-
-	<p>
-		Mattis ullamcorper velit sed ullamcorper morbi tincidunt. Tortor posuere ac ut consequat semper
-		viverra. Tellus mauris a diam maecenas sed enim ut sem viverra. Venenatis urna cursus eget nunc
-		scelerisque viverra mauris in. Arcu ac tortor dignissim convallis aenean et tortor at. Curabitur
-		gravida arcu ac tortor dignissim convallis aenean et tortor. Egestas tellus rutrum tellus
-		pellentesque eu. Fusce ut placerat orci nulla pellentesque dignissim enim sit amet. Ut enim
-		blandit volutpat maecenas volutpat blandit aliquam etiam. Id donec ultrices tincidunt arcu. Id
-		cursus metus aliquam eleifend mi.
-	</p>
-
-	<p>
-		Tempus quam pellentesque nec nam aliquam sem. Risus at ultrices mi tempus imperdiet. Id porta
-		nibh venenatis cras sed felis eget velit. Ipsum a arcu cursus vitae. Facilisis magna etiam
-		tempor orci eu lobortis elementum. Tincidunt dui ut ornare lectus sit. Quisque non tellus orci
-		ac. Blandit libero volutpat sed cras. Nec tincidunt praesent semper feugiat nibh sed pulvinar
-		proin gravida. Egestas integer eget aliquet nibh praesent tristique magna.
+	<p class="profile-cta">
+		You can find my projects and what I’m working on at{' '}
+		<a href="https://github.com/DandarGaming" target="_blank" rel="me noopener noreferrer">my GitHub</a>.
 	</p>
 </Layout>
+
+<style>
+	.eyebrow {
+		display: flex;
+		align-items: center;
+		gap: 13px;
+		margin: 0 0 15px;
+		color: var(--signal-red);
+		font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+		font-size: 0.68rem;
+		letter-spacing: 0.12em;
+	}
+
+	.profile-avatar {
+		width: 57px;
+		height: 57px;
+		padding: 3px;
+		border: 1px solid #334052;
+		border-radius: 8px;
+		background: linear-gradient(145deg, #48b8ff 0 48%, #ff496c 52% 100%);
+		object-fit: cover;
+		box-shadow: 0 0 0 4px #0b0d14;
+	}
+
+	.profile-intro p:not(.eyebrow) {
+		color: #c0c8d6;
+	}
+
+	h2 {
+		margin-top: 2.3em;
+		font-size: 1.65rem;
+	}
+
+	.project-list {
+		display: grid;
+		gap: 12px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.project-list li {
+		display: grid;
+		grid-template-columns: minmax(110px, 0.32fr) 1fr;
+		gap: 16px;
+		padding: 15px 16px;
+		border: 1px solid #252a37;
+		background: #090b11;
+	}
+
+	.project-list a {
+		font-weight: 700;
+		text-decoration: none;
+	}
+
+	.project-list span {
+		color: #aab3c5;
+	}
+
+	.skill-list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 9px;
+	}
+
+	.skill-list span {
+		padding: 5px 10px;
+		border: 1px solid #293044;
+		background: #10131b;
+		color: #86ceff;
+		font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+		font-size: 0.75rem;
+	}
+
+	.profile-cta {
+		margin-top: 3em;
+		padding: 18px;
+		border-left: 2px solid var(--signal-red);
+		background: #0b0d14;
+		color: #aab3c5;
+	}
+
+	@media (max-width: 560px) {
+		.project-list li {
+			grid-template-columns: 1fr;
+			gap: 4px;
+		}
+	}
+</style>
