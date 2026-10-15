@@ -6,12 +6,13 @@ import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 import Header from '../components/Header.astro';
 import AuthorBio from '../components/AuthorBio.astro';
+import { getTopicSlug } from '../utils/topics';
 
 type Props = Omit<CollectionEntry<'blog'>['data'], 'author'> & {
 	author?: CollectionEntry<'authors'>['data'];
 };
 
-const { title, description, pubDate, updatedDate, heroImage, author } = Astro.props;
+const { title, description, pubDate, updatedDate, heroImage, author, tags = [], category } = Astro.props;
 ---
 
 <html lang="en">
@@ -62,6 +63,59 @@ const { title, description, pubDate, updatedDate, heroImage, author } = Astro.pr
 				color: #8791a4;
 				font-style: normal;
 			}
+			.post-topics {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 6px;
+				margin: 18px 0 0;
+				padding: 0;
+				list-style: none;
+			}
+			.topic-link {
+				display: inline-flex;
+				align-items: center;
+				gap: 7px;
+				min-height: 30px;
+				padding: 4px 10px;
+				border: 1px solid #293044;
+				border-radius: 2px;
+				background: #0b0e15;
+				color: #bdc7d8;
+				font-size: 0.75rem;
+				line-height: 1.3;
+				text-decoration: none;
+				transition:
+					border-color 160ms ease,
+					background 160ms ease,
+					color 160ms ease;
+			}
+			.topic-kind {
+				color: #7f899c;
+				font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+				font-size: 0.59rem;
+				letter-spacing: 0.1em;
+			}
+			.topic-category {
+				border-left: 2px solid var(--signal-red);
+			}
+			.topic-category .topic-kind {
+				color: var(--signal-red);
+			}
+			.topic-tag .topic-hash {
+				color: var(--accent);
+				font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+				font-weight: 700;
+			}
+			.topic-link:hover,
+			.topic-link:focus-visible {
+				border-color: var(--accent);
+				background: #101722;
+				color: #f4f6fb;
+			}
+			.topic-link:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 3px;
+			}
 			@media (max-width: 720px) {
 				main {
 					width: calc(100% - 36px);
@@ -93,6 +147,33 @@ const { title, description, pubDate, updatedDate, heroImage, author } = Astro.pr
 							}
 						</div>
 						<h1>{title}</h1>
+						{
+							(category || tags.length > 0) && (
+								<ul class="post-topics" aria-label={`Topics for ${title}`}>
+									{category && (
+										<li>
+											<a
+												class="topic-link topic-category"
+												href={`/blog/categories/${getTopicSlug(category)}/`}
+												aria-label={`Category: ${category}`}
+											>
+												<span class="topic-kind">CATEGORY /</span>
+												<span class="topic-name">{category}</span>
+											</a>
+										</li>
+									)}
+									{tags.map((tag) => (
+										<li>
+											<a class="topic-link topic-tag" href={`/blog/tags/${getTopicSlug(tag)}/`}>
+												<span class="topic-hash" aria-hidden="true">#</span>
+												<span class="topic-name">{tag}</span>
+												<span class="sr-only"> tag</span>
+											</a>
+										</li>
+									))}
+								</ul>
+							)
+						}
 						<hr />
 					</div>
 					<slot />

@@ -41,6 +41,24 @@ The `src/content/` directory contains "collections" of related Markdown and MDX 
 
 Any static assets, like images, can be placed in the `public/` directory.
 
+## Categorizing blog posts
+
+Blog post frontmatter may include a category and a list of tags. Both are
+optional, so existing posts without topic metadata continue to work. For
+example:
+
+```yaml
+category: Guides
+tags:
+  - Astro
+  - Markdown
+```
+
+Topic links appear in the journal and on each post. Each tag and category has a
+pre-rendered archive at `/blog/tags/<topic>/` or
+`/blog/categories/<topic>/`, so topic navigation works on the static S3 and
+CloudFront deployment.
+
 ## 🧞 Commands
 
 All commands are run from the root of the project, from a terminal:
