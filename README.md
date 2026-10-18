@@ -14,6 +14,8 @@ Features:
 - ✅ Sitemap support
 - ✅ RSS Feed support
 - ✅ Markdown & MDX support
+- ✅ Static, client-side search across post titles and descriptions
+- ✅ Author directory and statically generated author profiles
 
 ## 🚀 Project Structure
 

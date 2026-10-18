@@ -1,0 +1,245 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection, getEntry } from 'astro:content';
+import BaseHead from '../../components/BaseHead.astro';
+import Footer from '../../components/Footer.astro';
+import FormattedDate from '../../components/FormattedDate.astro';
+import Header from '../../components/Header.astro';
+import { SITE_TITLE } from '../../consts';
+
+export async function getStaticPaths() {
+	const authors = await getCollection('authors');
+	return authors.map((author) => ({ params: { slug: author.id } }));
+}
+
+const { slug } = Astro.params;
+const author = slug ? await getEntry('authors', slug) : undefined;
+const posts = author
+	? (await getCollection('blog', ({ data }) => data.author.id === author.id)).sort(
+			(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+		)
+	: [];
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead
+			title={`${author?.data.name ?? 'Author not found'} | ${SITE_TITLE}`}
+			description={author?.data.bio ?? 'This author could not be found.'}
+		/>
+	</head>
+	<body>
+		<Header />
+		<main>
+			{
+				author ? (
+					<article class="author-profile" aria-labelledby="author-name">
+						<a class="back-link" href="/authors/">← All authors</a>
+						<header class="profile-header">
+							<Image
+								class="author-avatar"
+								width={144}
+								height={144}
+								src={author.data.avatar}
+								alt={`Portrait of ${author.data.name}`}
+							/>
+							<div>
+								<p class="eyebrow">AUTHOR PROFILE</p>
+								<h1 id="author-name">{author.data.name}<span>.</span></h1>
+								<p class="bio">{author.data.bio}</p>
+								{
+									author.data.socialLinks.length > 0 && (
+										<nav aria-label={`${author.data.name}'s social links`}>
+											<ul class="social-links">
+												{author.data.socialLinks.map(({ label, url }) => (
+													<li>
+														<a href={url} rel="me noopener noreferrer">{label}</a>
+													</li>
+												))}
+											</ul>
+										</nav>
+									)
+								}
+							</div>
+						</header>
+
+						<section class="author-posts" aria-labelledby="author-posts-title">
+							<h2 id="author-posts-title">Posts by {author.data.name}</h2>
+							{
+								posts.length > 0 ? (
+									<ul class="post-list">
+										{posts.map((post) => (
+											<li>
+												<a class="post-link" href={`/blog/${post.id}/`}>
+													<span class="post-copy">
+														<span class="post-date"><FormattedDate date={post.data.pubDate} /></span>
+														<span class="post-title">{post.data.title}</span>
+														<span class="post-description">{post.data.description}</span>
+													</span>
+													<span class="post-arrow" aria-hidden="true">↗</span>
+												</a>
+											</li>
+										))}
+									</ul>
+								) : (
+									<p class="empty-posts">This author has not published any posts yet.</p>
+								)
+							}
+						</section>
+					</article>
+				) : (
+					<section aria-labelledby="not-found-title">
+						<h1 id="not-found-title">Author not found</h1>
+						<p>This author profile does not exist.</p>
+						<a href="/authors/">Browse all authors</a>
+					</section>
+				)
+			}
+		</main>
+		<Footer />
+	</body>
+</html>
+
+<style>
+	.author-profile {
+		width: min(960px, 100%);
+		margin-inline: auto;
+	}
+
+	.back-link {
+		display: inline-block;
+		margin-bottom: 30px;
+		font-size: 0.82rem;
+		text-decoration: none;
+	}
+
+	.profile-header {
+		display: grid;
+		grid-template-columns: 144px minmax(0, 1fr);
+		align-items: start;
+		gap: 32px;
+		padding-bottom: 34px;
+		border-bottom: 1px solid #252a37;
+	}
+
+	.author-avatar {
+		width: 144px;
+		height: 144px;
+		margin: 0;
+		border: 1px solid #303747;
+		border-radius: 50%;
+		object-fit: cover;
+	}
+
+	.eyebrow {
+		margin: 0 0 10px;
+		color: #9ba4b7;
+		font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+		font-size: 0.67rem;
+		letter-spacing: 0.12em;
+	}
+
+	h1 {
+		margin-bottom: 12px;
+		font-size: clamp(2.4rem, 6vw, 4.25rem);
+	}
+
+	h1 span {
+		color: var(--signal-red);
+	}
+
+	.bio {
+		max-width: 680px;
+		margin-bottom: 16px;
+		color: #aab3c5;
+	}
+
+	.social-links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75em 1em;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.social-links a {
+		font-size: 0.86rem;
+	}
+
+	.author-posts {
+		margin-top: 34px;
+	}
+
+	.author-posts h2 {
+		margin-bottom: 20px;
+		font-size: 1.6rem;
+	}
+
+	.post-list {
+		margin: 0;
+		padding: 0;
+		border-top: 1px solid #252a37;
+		list-style: none;
+	}
+
+	.post-list li {
+		border-bottom: 1px solid #252a37;
+	}
+
+	.post-link {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 20px;
+		padding: 20px 8px;
+		color: inherit;
+		text-decoration: none;
+	}
+
+	.post-link:hover {
+		background: #10131b;
+	}
+
+	.post-copy {
+		display: flex;
+		flex-direction: column;
+		align-items: start;
+	}
+
+	.post-date {
+		margin-bottom: 5px;
+		color: #8791a4;
+		font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+		font-size: 0.68rem;
+	}
+
+	.post-title {
+		color: #f4f6fb;
+		font-size: 1.2rem;
+		font-weight: 700;
+	}
+
+	.post-description,
+	.empty-posts {
+		color: #aab3c5;
+		font-size: 0.86rem;
+	}
+
+	.post-arrow {
+		color: var(--accent);
+	}
+
+	@media (max-width: 560px) {
+		.profile-header {
+			grid-template-columns: 88px minmax(0, 1fr);
+			gap: 18px;
+		}
+
+		.author-avatar {
+			width: 88px;
+			height: 88px;
+		}
+	}
+</style>
