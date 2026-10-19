@@ -22,20 +22,11 @@ jobs:
       - name: Build Astro site
         run: npm run build
 
-      - name: Validate AWS region configuration
-        env:
-          AWS_REGION: ${{ vars.AWS_REGION || secrets.AWS_REGION || vars.AWS_DEFAULT_REGION || secrets.AWS_DEFAULT_REGION }}
-        run: |
-          if [ -z "$AWS_REGION" ]; then
-            echo "::error::Set the AWS_REGION or AWS_DEFAULT_REGION Actions variable or secret to the region containing StaticSiteStack."
-            exit 1
-          fi
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION || secrets.AWS_REGION || vars.AWS_DEFAULT_REGION || secrets.AWS_DEFAULT_REGION }}
+          aws-region: us-east-1
 
       - name: Read deployment target
         shell: bash
