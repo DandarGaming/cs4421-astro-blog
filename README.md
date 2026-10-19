@@ -171,9 +171,10 @@ process-health details are not available on this S3 deployment.
    ```
 
 4. In the GitHub repository settings, add the role ARN as the
-   `AWS_ROLE_ARN` Actions secret. Set the deployment region as either the
-   `AWS_REGION` Actions variable or secret (if both are set, the variable takes
-   precedence).
+   `AWS_ROLE_ARN` Actions secret. Set the deployment region as an Actions
+   variable or secret named `AWS_REGION` or `AWS_DEFAULT_REGION`. If multiple
+   values are set, `AWS_REGION` takes precedence over `AWS_DEFAULT_REGION`,
+   and variables take precedence over secrets.
 
 After setup, every push to `main` builds and publishes the site. For an
 existing installation of the former CodePipeline deployment, use the same
