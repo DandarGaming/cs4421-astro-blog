@@ -37,3 +37,16 @@ jobs:
 
       - name: Build site
         run: npm run build
+
+      - name: Compile CDK app
+        run: npm ci && npm run build
+        working-directory: cdk
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: validate
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/deploy-static.yml
+    secrets: inherit

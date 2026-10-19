@@ -1,17 +1,10 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib';
-import { DeploymentPipelineStack } from '../lib/deployment-pipeline-stack.js';
+import { StaticSiteStack } from '../lib/static-site-stack.js';
 
 const app = new cdk.App();
-const connectionArn = process.env.GITHUB_CONNECTION_ARN;
 const account = process.env.CDK_DEFAULT_ACCOUNT;
 const region = process.env.CDK_DEFAULT_REGION;
-
-if (!connectionArn) {
-	throw new Error(
-		'Set GITHUB_CONNECTION_ARN to the ARN of an authorized AWS CodeStar connection to GitHub.',
-	);
-}
 
 if (!account || !region) {
 	throw new Error(
@@ -19,6 +12,6 @@ if (!account || !region) {
 	);
 }
 
-new DeploymentPipelineStack(app, 'AstroBlogPipelineStack', connectionArn, {
+new StaticSiteStack(app, 'StaticSiteStack', {
 	env: { account, region },
 });
