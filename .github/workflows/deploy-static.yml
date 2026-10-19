@@ -3,9 +3,18 @@ name: Deploy site
 on:
   workflow_call:
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -25,6 +34,7 @@ jobs:
       - name: Validate AWS role configuration
         env:
           AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+        shell: bash
         run: |
           if [ -z "$AWS_ROLE_ARN" ]; then
             echo "::error::Configure the AWS_ROLE_ARN Actions secret with the ARN of the GitHub deployment role."
@@ -40,17 +50,21 @@ jobs:
       - name: Read deployment target
         shell: bash
         run: |
+          set -euo pipefail
+
           SITE_BUCKET="$(aws cloudformation describe-stacks \
             --stack-name StaticSiteStack \
             --query "Stacks[0].Outputs[?OutputKey=='SiteBucketName'].OutputValue | [0]" \
             --output text)"
+
           DISTRIBUTION_ID="$(aws cloudformation describe-stacks \
             --stack-name StaticSiteStack \
             --query "Stacks[0].Outputs[?OutputKey=='SiteDistributionId'].OutputValue | [0]" \
             --output text)"
 
-          if [ "$SITE_BUCKET" = "None" ] || [ "$DISTRIBUTION_ID" = "None" ]; then
-            echo "StaticSiteStack is missing the bucket or CloudFront output." >&2
+          if [ -z "$SITE_BUCKET" ] || [ "$SITE_BUCKET" = "None" ] || \
+             [ -z "$DISTRIBUTION_ID" ] || [ "$DISTRIBUTION_ID" = "None" ]; then
+            echo "::error::StaticSiteStack is missing the bucket or CloudFront output."
             exit 1
           fi
 
@@ -61,4 +75,7 @@ jobs:
         run: aws s3 sync dist/ "s3://$SITE_BUCKET" --delete
 
       - name: Invalidate CloudFront cache
-        run: aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "$DISTRIBUTION_ID" \
+            --paths "/*"
