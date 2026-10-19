@@ -171,8 +171,8 @@ process-health details are not available on this S3 deployment.
    ```
 
 4. In the GitHub repository settings, add the role ARN as the
-   `AWS_ROLE_ARN` Actions secret and the deployment region as the `AWS_REGION`
-   Actions variable.
+   `AWS_ROLE_ARN` Actions secret. The GitHub Actions deployment is configured
+   to use `us-east-1`, so deploy `StaticSiteStack` to that same AWS region.
 
 After setup, every push to `main` builds and publishes the site. For an
 existing installation of the former CodePipeline deployment, use the same
