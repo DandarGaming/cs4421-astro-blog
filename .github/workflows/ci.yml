@@ -39,8 +39,8 @@ jobs:
         run: npm run build
 
       - name: Compile CDK app
-        run: npm ci && npm run build
         working-directory: cdk
+        run: npm ci && npm run build
 
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
