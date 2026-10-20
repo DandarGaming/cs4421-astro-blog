@@ -52,27 +52,32 @@ jobs:
         run: |
           set -euo pipefail
 
-          for attempt in {1..30}; do
-            OUTPUTS="$(aws cloudformation describe-stacks \
+          OUTPUTS="$(aws cloudformation describe-stacks \
+            --stack-name StaticSiteStack \
+            --query "Stacks[0].Outputs[].[OutputKey,OutputValue]" \
+            --output text)"
+          SITE_BUCKET="$(awk '$1 == "SiteBucketName" { print $2 }' <<< "$OUTPUTS")"
+          DISTRIBUTION_ID="$(awk '$1 == "SiteDistributionId" { print $2 }' <<< "$OUTPUTS")"
+
+          if [ -z "$SITE_BUCKET" ] || [ "$SITE_BUCKET" = "None" ] || \
+             [ -z "$DISTRIBUTION_ID" ] || [ "$DISTRIBUTION_ID" = "None" ]; then
+            RESOURCES="$(aws cloudformation describe-stack-resources \
               --stack-name StaticSiteStack \
-              --query "Stacks[0].Outputs[].[OutputKey,OutputValue]" \
+              --query "StackResources[].[ResourceType,PhysicalResourceId]" \
               --output text)"
-            SITE_BUCKET="$(awk '$1 == "SiteBucketName" { print $2 }' <<< "$OUTPUTS")"
-            DISTRIBUTION_ID="$(awk '$1 == "SiteDistributionId" { print $2 }' <<< "$OUTPUTS")"
-
-            if [ -n "$SITE_BUCKET" ] && [ "$SITE_BUCKET" != "None" ] && \
-               [ -n "$DISTRIBUTION_ID" ] && [ "$DISTRIBUTION_ID" != "None" ]; then
-              break
+            if [ -z "$SITE_BUCKET" ] || [ "$SITE_BUCKET" = "None" ]; then
+              SITE_BUCKET="$(awk '$1 == "AWS::S3::Bucket" { print $2; exit }' <<< "$RESOURCES")"
             fi
-
-            if [ "$attempt" -eq 30 ]; then
-              echo "::error::StaticSiteStack still has no bucket or CloudFront output after waiting 10 minutes for the infrastructure pipeline."
-              exit 1
+            if [ -z "$DISTRIBUTION_ID" ] || [ "$DISTRIBUTION_ID" = "None" ]; then
+              DISTRIBUTION_ID="$(awk '$1 == "AWS::CloudFront::Distribution" { print $2; exit }' <<< "$RESOURCES")"
             fi
+          fi
 
-            echo "Waiting for the infrastructure pipeline to publish deployment outputs (attempt $attempt/30)..."
-            sleep 20
-          done
+          if [ -z "$SITE_BUCKET" ] || [ "$SITE_BUCKET" = "None" ] || \
+             [ -z "$DISTRIBUTION_ID" ] || [ "$DISTRIBUTION_ID" = "None" ]; then
+            echo "::error::Could not resolve the S3 bucket and CloudFront distribution from StaticSiteStack outputs or resources."
+            exit 1
+          fi
 
           echo "SITE_BUCKET=$SITE_BUCKET" >> "$GITHUB_ENV"
           echo "DISTRIBUTION_ID=$DISTRIBUTION_ID" >> "$GITHUB_ENV"
