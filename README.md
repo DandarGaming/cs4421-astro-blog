@@ -106,7 +106,9 @@ process-health details are not available on this S3 deployment.
 
    Use an AWS CLI profile or temporary credentials rather than putting
    credentials in the repository. The CDK app requires the account and region
-   to match the credentials used for both commands.
+   to match the credentials used for both commands. Re-run
+   `npx cdk deploy StaticSiteStack` after infrastructure changes; GitHub Actions
+   only publishes site files and does not deploy CDK infrastructure.
 2. In AWS IAM, create the GitHub Actions OIDC provider for
    `token.actions.githubusercontent.com` if the account does not already have
    one. Create a role with this trust policy, replacing the account ID:
@@ -175,10 +177,11 @@ process-health details are not available on this S3 deployment.
    to use `us-east-1`, so deploy `StaticSiteStack` to that same AWS region.
 
 After setup, every push to `main` builds and publishes the site. For an
-existing installation of the former CodePipeline deployment, use the same
-AWS account and region for `StaticSiteStack`; once GitHub Actions has deployed
-successfully, disable or delete the old `AstroBlogPipelineStack` so only one
-pipeline deploys production.
+existing installation of the former CodePipeline deployment, first deploy
+`StaticSiteStack` from this CDK app in the same AWS account and region so it
+publishes the `SiteBucketName` and `SiteDistributionId` outputs. Once GitHub
+Actions has deployed successfully, disable or delete the old
+`AstroBlogPipelineStack` so only one pipeline deploys production.
 
 ## 👀 Want to learn more?
 
