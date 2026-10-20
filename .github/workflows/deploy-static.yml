@@ -1,19 +1,20 @@
-name: Validate site
+name: Deploy site
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  workflow_call:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
-  validate:
+  deploy:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -21,7 +22,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.12.0
           cache: npm
 
       - name: Install dependencies
@@ -30,6 +31,51 @@ jobs:
       - name: Build Astro site
         run: npm run build
 
-      - name: Install and compile CDK app
-        run: npm ci && npm run build
-        working-directory: cdk
+      - name: Validate AWS role configuration
+        env:
+          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+        shell: bash
+        run: |
+          if [ -z "$AWS_ROLE_ARN" ]; then
+            echo "::error::Configure the AWS_ROLE_ARN Actions secret with the ARN of the GitHub deployment role."
+            exit 1
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Read deployment target
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SITE_BUCKET="$(aws cloudformation describe-stacks \
+            --stack-name StaticSiteStack \
+            --query "Stacks[0].Outputs[?OutputKey=='SiteBucketName'].OutputValue | [0]" \
+            --output text)"
+
+          DISTRIBUTION_ID="$(aws cloudformation describe-stacks \
+            --stack-name StaticSiteStack \
+            --query "Stacks[0].Outputs[?OutputKey=='SiteDistributionId'].OutputValue | [0]" \
+            --output text)"
+
+          if [ -z "$SITE_BUCKET" ] || [ "$SITE_BUCKET" = "None" ] || \
+             [ -z "$DISTRIBUTION_ID" ] || [ "$DISTRIBUTION_ID" = "None" ]; then
+            echo "::error::StaticSiteStack is missing the bucket or CloudFront output."
+            exit 1
+          fi
+
+          echo "SITE_BUCKET=$SITE_BUCKET" >> "$GITHUB_ENV"
+          echo "DISTRIBUTION_ID=$DISTRIBUTION_ID" >> "$GITHUB_ENV"
+
+      - name: Sync site to S3
+        run: aws s3 sync dist/ "s3://$SITE_BUCKET" --delete
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "$DISTRIBUTION_ID" \
+            --paths "/*"

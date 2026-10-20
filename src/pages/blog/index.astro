@@ -6,6 +6,7 @@ import Footer from '../../components/Footer.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
 import Header from '../../components/Header.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
+import { getTopicSlug } from '../../utils/topics';
 
 const posts = (await getCollection('blog')).sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
@@ -32,10 +33,25 @@ const posts = (await getCollection('blog')).sort(
 					</a>
 				</div>
 
-				<ul class="post-list">
+				<div class="search-panel">
+					<label class="search-label" for="post-search">Search entries</label>
+					<input
+						id="post-search"
+						type="search"
+						aria-describedby="search-help search-status"
+						aria-controls="post-list"
+						placeholder="Search titles and descriptions"
+					/>
+					<p id="search-help" class="search-help">Search post titles and descriptions.</p>
+					<p id="search-status" class="search-status" role="status" aria-live="polite">
+						Showing all {posts.length} {posts.length === 1 ? 'post' : 'posts'}.
+					</p>
+				</div>
+
+				<ul class="post-list" id="post-list" aria-label="Journal entries">
 					{
 						posts.map((post, index) => (
-							<li>
+							<li data-search={`${post.data.title} ${post.data.description}`}>
 								<a class="post-card" href={`/blog/${post.id}/`}>
 									<span class="post-number">{String(index + 1).padStart(2, '0')}</span>
 									<span class="post-copy">
@@ -51,6 +67,36 @@ const posts = (await getCollection('blog')).sort(
 									}
 									<span class="post-arrow" aria-hidden="true">↗</span>
 								</a>
+								{
+									(post.data.category || post.data.tags.length > 0) && (
+										<div class="topics-row">
+											<span class="topics-label" aria-hidden="true">FILED UNDER</span>
+											<ul class="post-topics" aria-label={`Topics for ${post.data.title}`}>
+											{post.data.category && (
+												<li>
+													<a
+														class="topic-link topic-category"
+														href={`/blog/categories/${getTopicSlug(post.data.category)}/`}
+														aria-label={`Category: ${post.data.category}`}
+													>
+														<span class="topic-kind">CATEGORY /</span>
+														<span class="topic-name">{post.data.category}</span>
+													</a>
+												</li>
+											)}
+											{post.data.tags.map((tag) => (
+												<li>
+													<a class="topic-link topic-tag" href={`/blog/tags/${getTopicSlug(tag)}/`}>
+														<span class="topic-hash" aria-hidden="true">#</span>
+														<span class="topic-name">{tag}</span>
+														<span class="sr-only"> tag</span>
+													</a>
+												</li>
+											))}
+											</ul>
+										</div>
+									)
+								}
 							</li>
 						))
 					}
@@ -60,6 +106,33 @@ const posts = (await getCollection('blog')).sort(
 		<Footer />
 	</body>
 </html>
+
+<script>
+	const searchInput = document.querySelector<HTMLInputElement>('#post-search');
+	const searchStatus = document.querySelector<HTMLElement>('#search-status');
+	const postItems = Array.from(document.querySelectorAll<HTMLLIElement>('#post-list li'));
+
+	searchInput?.addEventListener('input', () => {
+		const query = searchInput.value.trim().toLowerCase();
+		let visibleCount = 0;
+
+		for (const postItem of postItems) {
+			const matches = !query || (postItem.dataset.search ?? '').toLowerCase().includes(query);
+			postItem.hidden = !matches;
+			if (matches) visibleCount += 1;
+		}
+
+		if (searchStatus) {
+			if (!query) {
+				searchStatus.textContent = `Showing all ${postItems.length} ${postItems.length === 1 ? 'post' : 'posts'}.`;
+			} else if (visibleCount === 0) {
+				searchStatus.textContent = `No posts found for “${searchInput.value.trim()}”.`;
+			} else {
+				searchStatus.textContent = `${visibleCount} ${visibleCount === 1 ? 'post' : 'posts'} found.`;
+			}
+		}
+	});
+</script>
 
 <style>
 	.journal {
@@ -84,7 +157,7 @@ const posts = (await getCollection('blog')).sort(
 		align-items: end;
 		justify-content: space-between;
 		gap: 28px;
-		margin-bottom: 42px;
+		margin-bottom: 30px;
 	}
 
 	h1 {
@@ -114,6 +187,35 @@ const posts = (await getCollection('blog')).sort(
 		color: var(--signal-red);
 	}
 
+	.search-panel {
+		max-width: 620px;
+		margin-bottom: 34px;
+	}
+
+	.search-label {
+		display: block;
+		margin-bottom: 7px;
+		color: #f4f6fb;
+		font-size: 0.9rem;
+		font-weight: 700;
+	}
+
+	.search-panel input {
+		width: 100%;
+	}
+
+	.search-help,
+	.search-status {
+		margin: 7px 0 0;
+		color: #9ba4b7;
+		font-size: 0.76rem;
+		line-height: 1.5;
+	}
+
+	.search-status {
+		color: #c0c8d6;
+	}
+
 	.post-list {
 		margin: 0;
 		padding: 0;
@@ -121,8 +223,82 @@ const posts = (await getCollection('blog')).sort(
 		list-style: none;
 	}
 
+	.post-list li[hidden] {
+		display: none;
+	}
+
 	.post-list li {
 		border-bottom: 1px solid #252a37;
+	}
+
+	.topics-row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 12px;
+		margin: -8px 8px 18px 74px;
+	}
+
+	.topics-label,
+	.topic-kind {
+		color: #7f899c;
+		font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+		font-size: 0.59rem;
+		letter-spacing: 0.1em;
+	}
+
+	.post-topics {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.topic-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 7px;
+		min-height: 28px;
+		padding: 3px 9px;
+		border: 1px solid #293044;
+		border-radius: 2px;
+		background: #0b0e15;
+		color: #bdc7d8;
+		font-size: 0.7rem;
+		line-height: 1.3;
+		text-decoration: none;
+		transition:
+			border-color 160ms ease,
+			background 160ms ease,
+			color 160ms ease;
+	}
+
+	.topic-category {
+		border-left: 2px solid var(--signal-red);
+	}
+
+	.topic-category .topic-kind {
+		color: var(--signal-red);
+	}
+
+	.topic-tag .topic-hash {
+		color: var(--accent);
+		font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+		font-weight: 700;
+	}
+
+	.topic-link:hover,
+	.topic-link:focus-visible {
+		border-color: var(--accent);
+		background: #101722;
+		color: #f4f6fb;
+	}
+
+	.topic-link:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 3px;
 	}
 
 	.post-card {
@@ -221,6 +397,10 @@ const posts = (await getCollection('blog')).sort(
 			grid-template-columns: 32px minmax(0, 1fr) 20px;
 			gap: 12px;
 			padding: 19px 4px;
+		}
+
+		.topics-row {
+			margin-left: 48px;
 		}
 
 		.post-image {
