@@ -56,13 +56,6 @@ function handler(event) {
 			})),
 		});
 
-		new cdk.CfnOutput(this, 'SiteBucketName', {
-			value: siteBucket.bucketName,
-		});
-		new cdk.CfnOutput(this, 'SiteDistributionId', {
-			value: distribution.distributionId,
-		});
-
 		new s3deploy.BucketDeployment(this, 'DeploySite', {
 			sources: [s3deploy.Source.asset(path.resolve(__dirname, '../../dist'))],
 			destinationBucket: siteBucket,
