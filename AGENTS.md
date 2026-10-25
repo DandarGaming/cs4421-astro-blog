@@ -8,13 +8,6 @@ astro dev --background
 
 Manage the background server with `astro dev stop`, `astro dev status`, and `astro dev logs`.
 
-## Review workflow
-
-- Complete the requested work and run the relevant checks once. If those checks pass, report the results and stop rather than repeating the same checks.
-- Leave changes unstaged and uncommitted for the user's review. Only stage or commit after the user explicitly approves or requests a commit.
-- Never push unless the user explicitly requests a push.
-- For each acceptance criterion, give a concise pass/fail result backed by implementation or test evidence. Distinguish verified behavior from assumptions or deployment behavior that was not tested.
-
 ## Documentation
 
 Full documentation: https://docs.astro.build

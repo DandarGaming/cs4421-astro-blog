@@ -79,7 +79,7 @@ files but do not provision infrastructure.
 
 ## Implementation notes
 
-CI uses Node.js 22.12.0 and `npm ci`. The deploy workflow validates
+CI uses Node.js 22.23.4 and `npm ci`. The deploy workflow validates
 `AWS_ROLE_ARN`, reads CloudFormation outputs, syncs to S3, and invalidates the
 distribution. CDK outputs include the bucket name, distribution ID, and site
 URL.

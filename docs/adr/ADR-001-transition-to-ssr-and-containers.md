@@ -25,7 +25,7 @@ infrastructure change deploys and routes traffic to the Node server.
 
 ## Consequences
 
-- Production now requires a running Node.js process (Node.js 22.12 or later),
+- Production now requires a running Node.js process (Node.js 22.23.4 or later),
   rather than only static object hosting.
 - Health checks can query `/api/health` and receive process uptime and a UTC
   timestamp.

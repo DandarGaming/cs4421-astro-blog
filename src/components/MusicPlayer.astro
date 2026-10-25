@@ -1,0 +1,641 @@
+---
+import { isSupabaseConfigured, supabase, getMusicUrl, type Song } from '../lib/supabase';
+
+let songs: Song[] = [];
+let queryError = '';
+
+if (supabase) {
+	const result = await supabase
+		.from('songs')
+		.select('id, artist, album, title, folder_name, audio_filename, artwork_filename, sort_order')
+		.eq('published', true)
+		.order('artist', { ascending: true })
+		.order('sort_order', { ascending: true })
+		.order('title', { ascending: true });
+
+	if (result.error) {
+		queryError = result.error.message;
+	} else {
+		songs = result.data ?? [];
+	}
+}
+
+const tracks = songs.map((song) => ({
+	...song,
+	audioUrl: getMusicUrl(`${song.folder_name}/${song.audio_filename}`),
+	artworkUrl: getMusicUrl(`${song.folder_name}/${song.artwork_filename}`),
+}));
+---
+
+<section class="music-section" aria-labelledby="music-title">
+	<div class="music-heading">
+		<div>
+			<p class="section-index">03 <span>/</span> SIDE QUEST</p>
+			<h2 id="music-title">Currently listening<span>.</span></h2>
+		</div>
+		<span class="music-status" data-music-status>{tracks.length ? `${tracks.length} TRACKS` : 'PREVIEW MODE'}</span>
+	</div>
+
+	<div class="player-shell" data-player>
+		<div class="player-art">
+			<div class="cd-disc" data-cd>
+				<div class="art-placeholder" data-art-placeholder aria-hidden="true">[&gt;]</div>
+				<img data-art alt="" hidden />
+			</div>
+		</div>
+		<div class="player-content">
+			<div class="track-heading">
+				<div>
+					<p class="track-title" data-track-title>{tracks[0]?.title ?? 'Supabase music player'}</p>
+					<p class="track-artist" data-track-artist>
+						{tracks[0]?.artist ?? 'Add published songs to begin'}
+					</p>
+				</div>
+				<span class="track-index" data-track-index>01 / {String(Math.max(tracks.length, 1)).padStart(2, '0')}</span>
+			</div>
+			<div class="waveform" aria-hidden="true" data-waveform>
+				{Array.from({ length: 64 }, (_, index) => <i style={`--bar: ${22 + ((index * 17) % 68)}%`}></i>)}
+			</div>
+			<div class="scrubber-row">
+				<span data-current-time>0:00</span>
+				<span class="range-shell progress-shell">
+					<input class="scrubber" type="range" min="0" max="100" value="0" step="0.1" aria-label="Track progress" data-progress />
+				</span>
+				<span data-duration>0:00</span>
+			</div>
+			<div class="player-controls">
+				<button type="button" class="icon-button" data-previous aria-label="Previous track">|◀</button>
+				<button type="button" class="play-button" data-play aria-label="Play" disabled>▶</button>
+				<button type="button" class="icon-button" data-next aria-label="Next track">▶|</button>
+				<label class="volume-control" aria-label="Volume">
+					<svg class="volume-icon" viewBox="0 0 24 24" aria-hidden="true">
+						<path d="M4 9v6h4l5 4V5L8 9H4Zm12.5-1.5a1 1 0 0 0-1.4 1.4 4.1 4.1 0 0 1 0 5.8 1 1 0 0 0 1.4 1.4 6.1 6.1 0 0 0 0-8.6Zm2.8-2.8a1 1 0 0 0-1.4 1.4 8.1 8.1 0 0 1 0 11.4 1 1 0 0 0 1.4 1.4 10.1 10.1 0 0 0 0-14.2Z" />
+					</svg>
+					<span class="range-shell volume-shell">
+						<input type="range" min="0" max="100" value="80" step="1" data-volume />
+					</span>
+				</label>
+			</div>
+		</div>
+	</div>
+
+	<p class="music-message" data-music-state="loading" hidden>Loading playlist...</p>
+	{queryError ? (
+		<p class="music-message music-error" data-music-state="error">Music could not be loaded: {queryError}</p>
+	) : !isSupabaseConfigured ? (
+		<p class="music-message" data-music-state="configuration">Connect Supabase and publish licensed tracks to enable playback.</p>
+	) : !tracks.length ? (
+		<p class="music-message" data-music-state="empty">No published tracks yet. Add songs to Supabase, then set <code>published</code> to <code>true</code>.</p>
+	) : null}
+
+</section>
+
+<script define:vars={{ tracks, isSupabaseConfigured, queryError }}>
+	const player = document.querySelector('[data-player]');
+	const audio = new Audio();
+	audio.crossOrigin = 'anonymous';
+	audio.preload = 'metadata';
+	audio.volume = 0.8;
+	const trackData = tracks;
+	const playButton = player?.querySelector('[data-play]');
+	const progress = player?.querySelector('[data-progress]');
+	const volume = player?.querySelector('[data-volume]');
+	const progressShell = progress?.parentElement;
+	const volumeShell = volume?.parentElement;
+	const title = player?.querySelector('[data-track-title]');
+	const artist = player?.querySelector('[data-track-artist]');
+	const artwork = player?.querySelector('[data-art]');
+	const artworkPlaceholder = player?.querySelector('[data-art-placeholder]');
+	const cd = player?.querySelector('[data-cd]');
+	const currentTime = player?.querySelector('[data-current-time]');
+	const duration = player?.querySelector('[data-duration]');
+	const indexLabel = player?.querySelector('[data-track-index]');
+	const waveformBars = [...(player?.querySelectorAll('[data-waveform] i') ?? [])];
+	const stateMessages = [...document.querySelectorAll('[data-music-state]')];
+	let audioContext;
+	let analyser;
+	let animationFrame;
+	let currentIndex = 0;
+
+	const setPlaylistState = (state) => {
+		stateMessages.forEach((message) => {
+			message.hidden = message.dataset.musicState !== state;
+		});
+	};
+
+	// Keep state transitions reusable if playlist fetching moves to the client.
+	const initializePlaylistState = () => {
+		if (queryError) {
+			setPlaylistState('error');
+		} else if (!isSupabaseConfigured) {
+			setPlaylistState('configuration');
+		} else if (!trackData.length) {
+			setPlaylistState('empty');
+		} else {
+			setPlaylistState('ready');
+		}
+	};
+
+	const formatTime = (seconds) => {
+		if (!Number.isFinite(seconds)) return '0:00';
+		return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
+	};
+
+	const updateProgress = () => {
+		const hasDuration = Number.isFinite(audio.duration) && audio.duration > 0;
+		if (currentTime) currentTime.textContent = formatTime(audio.currentTime);
+		if (duration && hasDuration) duration.textContent = formatTime(audio.duration);
+		if (progress) {
+			progress.value = hasDuration ? String((audio.currentTime / audio.duration) * 100) : '0';
+			progress.style.setProperty('--progress', `${Number(progress.value)}%`);
+		}
+		progressShell?.style.setProperty('--range-value', `${Number(progress?.value ?? 0)}%`);
+	};
+
+	const updateVolume = () => {
+		if (volume) {
+			volume.value = String(Math.round(audio.volume * 100));
+			volume.style.setProperty('--volume', `${Number(volume.value)}%`);
+		}
+		volumeShell?.style.setProperty('--range-value', `${Number(volume?.value ?? 0)}%`);
+	};
+
+	const updateWaveform = () => {
+		if (!analyser) return;
+		const values = new Float32Array(analyser.frequencyBinCount);
+		analyser.getFloatFrequencyData(values);
+		const nyquist = (audioContext?.sampleRate ?? 44100) / 2;
+		const lowestFrequency = 28;
+		const highestFrequency = Math.min(nyquist * 0.92, 18000);
+		const frequencyRatio = highestFrequency / lowestFrequency;
+		const minimumDecibels = analyser.minDecibels;
+		const decibelRange = analyser.maxDecibels - minimumDecibels;
+		waveformBars.forEach((bar, index) => {
+			const barStart = index / waveformBars.length;
+			const barEnd = (index + 1) / waveformBars.length;
+			const startFrequency = lowestFrequency * frequencyRatio ** barStart;
+			const endFrequency = lowestFrequency * frequencyRatio ** barEnd;
+			const start = Math.max(1, Math.floor((startFrequency / nyquist) * values.length));
+			const end = Math.max(start + 1, Math.ceil((endFrequency / nyquist) * values.length));
+			let sum = 0;
+			let peak = minimumDecibels;
+			let samples = 0;
+			for (let sample = start; sample < Math.min(end, values.length); sample += 1) {
+				const decibels = Math.max(minimumDecibels, values[sample]);
+				sum += decibels;
+				peak = Math.max(peak, decibels);
+				samples += 1;
+			}
+			const average = samples ? sum / samples : minimumDecibels;
+			const spectralLevel = average * 0.72 + peak * 0.28;
+			const normalized = Math.max(0, Math.min(1, (spectralLevel - minimumDecibels) / decibelRange));
+			const height = Math.max(4, Math.pow(normalized, 0.82) * 98);
+			bar.style.height = `${height}%`;
+			bar.style.opacity = `${0.62 + normalized * 0.38}`;
+		});
+		animationFrame = requestAnimationFrame(updateWaveform);
+	};
+
+	const stopWaveform = () => {
+		if (animationFrame) cancelAnimationFrame(animationFrame);
+	};
+
+	const startWaveform = () => {
+		try {
+			if (!analyser) {
+				audioContext = new AudioContext();
+				const source = audioContext.createMediaElementSource(audio);
+				analyser = audioContext.createAnalyser();
+				analyser.fftSize = 1024;
+				analyser.smoothingTimeConstant = 0.18;
+				analyser.minDecibels = -100;
+				analyser.maxDecibels = -20;
+				source.connect(analyser);
+				source.connect(audioContext.destination);
+			}
+			if (audioContext.state === 'suspended') audioContext.resume();
+		} catch {
+			analyser = undefined;
+			return;
+		}
+		stopWaveform();
+		updateWaveform();
+	};
+
+	const loadTrack = (index, autoplay = false) => {
+		const track = trackData[index];
+		if (!track || !playButton) return;
+		currentIndex = index;
+		audio.pause();
+		audio.src = track.audioUrl;
+		audio.currentTime = 0;
+		audio.load();
+		stopWaveform();
+		if (title) title.textContent = track.title;
+		if (artist) artist.textContent = track.artist;
+		if (indexLabel) indexLabel.textContent = `${String(index + 1).padStart(2, '0')} / ${String(trackData.length).padStart(2, '0')}`;
+		if (currentTime) currentTime.textContent = formatTime(audio.currentTime);
+		if (duration) duration.textContent = '0:00';
+		if (progress) {
+			progress.value = '0';
+			progress.style.setProperty('--progress', '0%');
+		}
+		progressShell?.style.setProperty('--range-value', '0%');
+		if (artwork && artworkPlaceholder && track.artworkUrl) {
+			artwork.src = track.artworkUrl;
+			artwork.alt = `${track.album ?? track.title} artwork`;
+			artwork.hidden = false;
+			artworkPlaceholder.hidden = true;
+		}
+		playButton.removeAttribute('disabled');
+		playButton.textContent = '▶';
+		playButton.setAttribute('aria-label', 'Play');
+		if (autoplay) {
+			audio.play().catch(() => undefined);
+		}
+	};
+
+	const togglePlayback = () => {
+		if (!trackData.length) return;
+		if (!audio.src) loadTrack(currentIndex);
+		if (audio.paused) {
+			startWaveform();
+			audio.play().catch(() => {
+				if (playButton) playButton.textContent = '▶';
+			});
+		} else {
+			audio.pause();
+		}
+	};
+
+	playButton?.addEventListener('click', togglePlayback);
+	player?.querySelector('[data-previous]')?.addEventListener('click', () => {
+		loadTrack((currentIndex - 1 + trackData.length) % trackData.length, true);
+	});
+	player?.querySelector('[data-next]')?.addEventListener('click', () => {
+		loadTrack((currentIndex + 1) % trackData.length, true);
+	});
+	volume?.addEventListener('input', (event) => {
+		audio.volume = Number(event.currentTarget.value) / 100;
+		updateVolume();
+	});
+	progress?.addEventListener('input', (event) => {
+		if (audio.duration) {
+			audio.currentTime = (Number(event.currentTarget.value) / 100) * audio.duration;
+			updateProgress();
+		}
+	});
+	audio.addEventListener('loadedmetadata', () => {
+		audio.currentTime = 0;
+		updateProgress();
+	});
+	audio.addEventListener('emptied', () => {
+		if (currentTime) currentTime.textContent = '0:00';
+		if (duration) duration.textContent = '0:00';
+		if (progress) {
+			progress.value = '0';
+			progress.style.setProperty('--progress', '0%');
+		}
+		progressShell?.style.setProperty('--range-value', '0%');
+	});
+	audio.addEventListener('timeupdate', () => {
+		updateProgress();
+	});
+	audio.addEventListener('play', () => {
+		if (playButton) playButton.textContent = 'Ⅱ';
+		if (playButton) playButton.setAttribute('aria-label', 'Pause');
+		cd?.classList.add('is-spinning');
+		startWaveform();
+	});
+	audio.addEventListener('pause', () => {
+		if (playButton) playButton.textContent = '▶';
+		if (playButton) playButton.setAttribute('aria-label', 'Play');
+		cd?.classList.remove('is-spinning');
+		stopWaveform();
+	});
+	audio.addEventListener('ended', () => {
+		loadTrack((currentIndex + 1) % trackData.length, true);
+	});
+	audio.addEventListener('error', () => {
+		if (playButton) {
+			playButton.setAttribute('aria-label', 'Unable to load this track');
+			playButton.textContent = '!';
+		}
+	});
+	const startingIndex = trackData.length > 1
+		? Math.floor(Math.random() * trackData.length)
+		: 0;
+	initializePlaylistState();
+	updateVolume();
+	loadTrack(startingIndex);
+</script>
+
+<style>
+	.music-section {
+		margin: 0 auto 112px;
+	}
+
+	.music-heading {
+		display: flex;
+		align-items: end;
+		justify-content: space-between;
+		gap: 20px;
+		margin-bottom: 22px;
+	}
+
+	.section-index {
+		margin: 0 0 12px;
+		color: #9ba4b7;
+		font-family: 'Courier New', monospace;
+		font-size: 0.67rem;
+		letter-spacing: 0.12em;
+	}
+
+	.section-index span,
+	.music-heading h2 span {
+		color: var(--signal-red);
+	}
+
+	.music-heading h2 {
+		margin: 0;
+		font-size: clamp(1.8rem, 4vw, 2.7rem);
+	}
+
+	.music-status,
+	.track-index {
+		color: var(--signal-red);
+		font-family: 'Courier New', monospace;
+		font-size: 0.67rem;
+		letter-spacing: 0.1em;
+	}
+
+	.player-shell {
+		display: grid;
+		grid-template-columns: 140px minmax(0, 1fr);
+		gap: 28px;
+		padding: 24px;
+		border: 1px solid #5a172b;
+		background: #030305;
+		box-shadow: 0 0 30px #ff17441c, inset 0 0 40px #ff174408;
+	}
+
+	.player-art {
+		display: grid;
+		place-items: center;
+		aspect-ratio: 1;
+	}
+
+	.cd-disc {
+		position: relative;
+		display: grid;
+		width: min(140px, 100%);
+		aspect-ratio: 1;
+		place-items: center;
+		overflow: hidden;
+		border: 1px solid #ff496c;
+		border-radius: 50%;
+		background: #080609;
+		box-shadow: 0 0 18px #ff174455;
+		animation: cd-spin 5s linear infinite;
+		animation-play-state: paused;
+	}
+
+	.cd-disc::before {
+		position: absolute;
+		z-index: 2;
+		inset: 0;
+		border-radius: 50%;
+		background: repeating-radial-gradient(
+			circle at center,
+			transparent 0 8px,
+			#ffffff12 8.5px 9px,
+			transparent 9.5px 16px
+		);
+		content: '';
+		pointer-events: none;
+	}
+
+	.cd-disc::after {
+		position: absolute;
+		z-index: 3;
+		top: 50%;
+		left: 50%;
+		width: 24px;
+		height: 24px;
+		border: 3px solid #c9ccd2;
+		border-radius: 50%;
+		background:
+			radial-gradient(circle, #050509 0 28%, #4b4e57 29% 34%, #09090d 35% 62%, #aeb2b9 63% 70%, #181920 71% 100%);
+		box-shadow: 0 0 0 1px #ff496c, 0 0 10px #ff174466;
+		content: '';
+		pointer-events: none;
+		transform: translate(-50%, -50%);
+	}
+
+	.cd-disc.is-spinning {
+		animation-play-state: running;
+	}
+
+	.player-art img {
+		position: relative;
+		z-index: 1;
+		width: 100%;
+		height: 100%;
+		border: 0;
+		border-radius: 50%;
+		object-fit: cover;
+	}
+
+	.player-art img[hidden] {
+		display: none;
+	}
+
+	.art-placeholder {
+		color: var(--signal-red);
+		font: 700 1.5rem 'Courier New', monospace;
+	}
+
+	.track-heading,
+	.scrubber-row,
+	.player-controls {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+	}
+
+	.track-title,
+	.track-artist {
+		margin: 0;
+		font-family: 'Courier New', monospace;
+	}
+
+	.track-title {
+		color: #f52b59;
+		font-size: clamp(1.1rem, 2.5vw, 1.6rem);
+	}
+
+	.track-artist {
+		color: #ff466f;
+		font-size: 1rem;
+	}
+
+	.waveform {
+		display: flex;
+		height: 74px;
+		align-items: end;
+		gap: 4px;
+		margin: 24px 0 8px;
+		border-bottom: 1px solid #74122e;
+		background: linear-gradient(180deg, #ff174408, transparent 75%);
+	}
+
+	.waveform i {
+		display: block;
+		flex: 1;
+		height: var(--bar);
+		min-width: 2px;
+		background: var(--signal-red);
+		box-shadow:
+			0 0 5px #ff1744cc,
+			0 0 12px #ff174488,
+			0 -4px 12px #ff8aa866;
+		transition: height 70ms linear, opacity 70ms linear;
+	}
+
+	.scrubber,
+	.volume-control input {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		margin: 0;
+		appearance: none;
+		background: transparent;
+		cursor: pointer;
+		opacity: 0;
+	}
+
+	.scrubber {
+		width: 100%;
+	}
+
+	.volume-control input {
+		width: 100%;
+	}
+
+	.range-shell {
+		position: relative;
+		display: block;
+		height: 16px;
+		border-radius: 999px;
+		background: linear-gradient(
+			to right,
+			var(--signal-red) 0 var(--range-value, 0%),
+			#41434a var(--range-value, 0%) 100%
+		) center / 100% 6px no-repeat;
+	}
+
+	.range-shell::after {
+		position: absolute;
+		top: 50%;
+		left: clamp(7px, var(--range-value, 0%), calc(100% - 7px));
+		width: 14px;
+		height: 14px;
+		border-radius: 50%;
+		background: var(--signal-red);
+		box-shadow: 0 0 8px #ff174466;
+		content: '';
+		pointer-events: none;
+		transform: translate(-50%, -50%);
+	}
+
+	.progress-shell {
+		flex: 1;
+		--range-value: var(--progress, 0%);
+	}
+
+	.volume-shell {
+		width: 150px;
+		--range-value: var(--volume, 80%);
+	}
+
+	.scrubber-row,
+	.volume-control {
+		color: #f52b59;
+		font: 0.72rem 'Courier New', monospace;
+	}
+
+	button {
+		border: 0;
+		background: transparent;
+		color: inherit;
+		cursor: pointer;
+		font: inherit;
+	}
+
+	.player-controls {
+		justify-content: flex-start;
+		margin-top: 18px;
+		color: var(--signal-red);
+	}
+
+	.icon-button {
+		font-size: 1.25rem;
+	}
+
+	.play-button {
+		display: grid;
+		width: 58px;
+		height: 58px;
+		place-items: center;
+		border: 1px solid var(--signal-red);
+		border-radius: 50%;
+		font-size: 1.2rem;
+		box-shadow: 0 0 14px #ff174433;
+	}
+
+	.play-button:disabled {
+		cursor: not-allowed;
+		opacity: 0.45;
+	}
+
+	.volume-control {
+		display: flex;
+		align-items: center;
+		gap: 9px;
+		margin-left: auto;
+	}
+
+	.volume-icon {
+		width: 19px;
+		height: 19px;
+		fill: currentColor;
+	}
+
+	@keyframes cd-spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
+	.music-message {
+		margin: 14px 0 0;
+		color: #8791a4;
+		font: 0.75rem 'Courier New', monospace;
+	}
+
+	.music-error {
+		color: #ff829c;
+	}
+
+	@media (max-width: 620px) {
+		.player-shell {
+			grid-template-columns: 1fr;
+		}
+
+		.player-art {
+			width: min(180px, 100%);
+		}
+	}
+</style>

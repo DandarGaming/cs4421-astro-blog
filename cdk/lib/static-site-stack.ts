@@ -1,4 +1,3 @@
-
 import * as cdk from 'aws-cdk-lib';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
@@ -61,22 +60,6 @@ function handler(event) {
 			destinationBucket: siteBucket,
 			distribution,
 			distributionPaths: ['/*'],
-		});
-
-		// Outputs required by the GitHub Actions deployment workflow
-		new cdk.CfnOutput(this, 'SiteBucketName', {
-			value: siteBucket.bucketName,
-			description: 'S3 bucket for the static website',
-		});
-
-		new cdk.CfnOutput(this, 'SiteDistributionId', {
-			value: distribution.distributionId,
-			description: 'CloudFront distribution ID',
-		});
-
-		new cdk.CfnOutput(this, 'SiteUrl', {
-			value: `https://${distribution.distributionDomainName}`,
-			description: 'Public website URL',
 		});
 	}
 }

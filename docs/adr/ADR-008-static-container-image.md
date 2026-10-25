@@ -41,7 +41,7 @@ and serves the same static output as AWS.
 
 Use a two-stage Docker build:
 
-1. Build with `node:22-alpine`, `npm ci`, and `npm run build`.
+1. Build with `node:22.23.4-alpine`, `npm ci`, and `npm run build`.
 2. Serve the generated `dist/` directory from `nginx:alpine`.
 
 Configure Nginx to listen on port `4321`, serve static files, return the

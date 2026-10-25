@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
 import FormattedDate from '../components/FormattedDate.astro';
+import MusicPlayer from '../components/MusicPlayer.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 
 const posts = (await getCollection('blog'))
@@ -29,6 +30,7 @@ const posts = (await getCollection('blog'))
 		</header>
 
 		<main>
+			<MusicPlayer />
 			<section class="hero" aria-labelledby="hero-title">
 				<div class="hero-copy">
 						<p class="eyebrow"><span class="status-light" aria-hidden="true"></span> DANDAR / SOFTWARE & SIDE QUESTS</p>
@@ -267,7 +269,7 @@ const posts = (await getCollection('blog'))
 		min-height: 100vh;
 		background: #05060a;
 		color: #f4f6fb;
-		font-family: var(--font-atkinson), sans-serif;
+		font-family: 'Courier New', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 		font-size: 16px;
 		line-height: 1.6;
 	}
