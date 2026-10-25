@@ -30,6 +30,7 @@ const authors = defineCollection({
 					z.object({
 						label: z.string(),
 						url: z.string().url(),
+						icon: z.enum(['github', 'linkedin']).optional(),
 					}),
 				)
 				.default([]),
