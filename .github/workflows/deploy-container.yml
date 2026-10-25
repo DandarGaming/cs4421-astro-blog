@@ -1,0 +1,151 @@
+name: Deploy container
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-container
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+  ECR_REPOSITORY: astro-ssr
+  ECS_CLUSTER: astro-ssr
+  ECS_SERVICE: astro-ssr
+  ECS_TASK_FAMILY: astro-ssr
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.4
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: Compile the SSR build
+        run: npm run build:ssr
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Check the deploy role variable
+        env:
+          ROLE_ARN: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+        run: |
+          if [ -z "$ROLE_ARN" ]; then
+            echo "::error::Set the AWS_DEPLOY_ROLE_ARN repository variable to the DeployRoleArn output of SsrSiteStack."
+            exit 1
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push the image
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+          registry="${{ steps.ecr.outputs.registry }}"
+          image_sha="$registry/$ECR_REPOSITORY:sha-${GITHUB_SHA::12}"
+          image_stable="$registry/$ECR_REPOSITORY:stable"
+
+          docker build -f Dockerfile.ssr -t "$image_sha" -t "$image_stable" .
+          docker push "$image_sha"
+          docker push "$image_stable"
+
+          echo "sha=$image_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Register a task definition revision
+        id: taskdef
+        shell: bash
+        run: |
+          set -euo pipefail
+          aws ecs describe-task-definition \
+            --task-definition "$ECS_TASK_FAMILY" \
+            --query taskDefinition \
+            --output json \
+            | jq --arg image "${{ steps.image.outputs.sha }}" '
+                .containerDefinitions[0].image = $image
+                | del(
+                    .taskDefinitionArn,
+                    .revision,
+                    .status,
+                    .requiresAttributes,
+                    .compatibilities,
+                    .registeredAt,
+                    .registeredBy
+                  )
+              ' > task-definition.json
+
+          revision=$(aws ecs register-task-definition \
+            --cli-input-json file://task-definition.json \
+            --query 'taskDefinition.revision' \
+            --output text)
+
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+          echo "Registered $ECS_TASK_FAMILY:$revision"
+
+      - name: Roll out the revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          aws ecs update-service \
+            --cluster "$ECS_CLUSTER" \
+            --service "$ECS_SERVICE" \
+            --task-definition "$ECS_TASK_FAMILY:${{ steps.taskdef.outputs.revision }}" \
+            --output json > /dev/null
+          aws ecs wait services-stable --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE"
+
+      - name: Verify the service kept the new revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          running=$(aws ecs describe-services \
+            --cluster "$ECS_CLUSTER" \
+            --services "$ECS_SERVICE" \
+            --query 'services[0].taskDefinition' \
+            --output text)
+          echo "Service is running $running"
+
+          if [[ "$running" != *":${{ steps.taskdef.outputs.revision }}" ]]; then
+            echo "::error::ECS rolled back to $running because the new tasks never passed the /api/health check."
+            exit 1
+          fi
+
+      - name: Show recent server logs
+        if: always()
+        shell: bash
+        run: |
+          aws logs tail /aws/ecs/astro-ssr --since 10m --format short || true
