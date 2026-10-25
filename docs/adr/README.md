@@ -22,6 +22,7 @@ The feature-specific templates are:
 - [ADR-007: CI/CD and AWS deployment](./ADR-007-ci-cd-and-aws-deployment.md)
 - [ADR-008: Static container image](./ADR-008-static-container-image.md)
 - [ADR-009: Supabase playlist data](./ADR-009-supabase-playlist-data.md)
+- [ADR-010: Admin draft management](./ADR-010-admin-draft-management.md)
 
 Existing decisions:
 
