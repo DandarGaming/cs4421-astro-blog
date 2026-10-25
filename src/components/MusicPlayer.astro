@@ -79,17 +79,18 @@ const tracks = songs.map((song) => ({
 		</div>
 	</div>
 
+	<p class="music-message" data-music-state="loading" hidden>Loading playlist...</p>
 	{queryError ? (
-		<p class="music-message music-error">Music could not be loaded: {queryError}</p>
+		<p class="music-message music-error" data-music-state="error">Music could not be loaded: {queryError}</p>
 	) : !isSupabaseConfigured ? (
-		<p class="music-message">Connect Supabase and publish licensed tracks to enable playback.</p>
+		<p class="music-message" data-music-state="configuration">Connect Supabase and publish licensed tracks to enable playback.</p>
 	) : !tracks.length ? (
-		<p class="music-message">No published tracks yet. Add songs to Supabase, then set <code>published</code> to <code>true</code>.</p>
+		<p class="music-message" data-music-state="empty">No published tracks yet. Add songs to Supabase, then set <code>published</code> to <code>true</code>.</p>
 	) : null}
 
 </section>
 
-<script define:vars={{ tracks }}>
+<script define:vars={{ tracks, isSupabaseConfigured, queryError }}>
 	const player = document.querySelector('[data-player]');
 	const audio = new Audio();
 	audio.crossOrigin = 'anonymous';
@@ -110,10 +111,30 @@ const tracks = songs.map((song) => ({
 	const duration = player?.querySelector('[data-duration]');
 	const indexLabel = player?.querySelector('[data-track-index]');
 	const waveformBars = [...(player?.querySelectorAll('[data-waveform] i') ?? [])];
+	const stateMessages = [...document.querySelectorAll('[data-music-state]')];
 	let audioContext;
 	let analyser;
 	let animationFrame;
 	let currentIndex = 0;
+
+	const setPlaylistState = (state) => {
+		stateMessages.forEach((message) => {
+			message.hidden = message.dataset.musicState !== state;
+		});
+	};
+
+	// Keep state transitions reusable if playlist fetching moves to the client.
+	const initializePlaylistState = () => {
+		if (queryError) {
+			setPlaylistState('error');
+		} else if (!isSupabaseConfigured) {
+			setPlaylistState('configuration');
+		} else if (!trackData.length) {
+			setPlaylistState('empty');
+		} else {
+			setPlaylistState('ready');
+		}
+	};
 
 	const formatTime = (seconds) => {
 		if (!Number.isFinite(seconds)) return '0:00';
@@ -304,6 +325,7 @@ const tracks = songs.map((song) => ({
 	const startingIndex = trackData.length > 1
 		? Math.floor(Math.random() * trackData.length)
 		: 0;
+	initializePlaylistState();
 	updateVolume();
 	loadTrack(startingIndex);
 </script>

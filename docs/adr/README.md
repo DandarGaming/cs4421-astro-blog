@@ -21,6 +21,7 @@ The feature-specific templates are:
 - [ADR-006: Tags, categories, and topic archives](./ADR-006-tags-categories-and-topic-archives.md)
 - [ADR-007: CI/CD and AWS deployment](./ADR-007-ci-cd-and-aws-deployment.md)
 - [ADR-008: Static container image](./ADR-008-static-container-image.md)
+- [ADR-009: Supabase playlist data](./ADR-009-supabase-playlist-data.md)
 
 Existing decisions:
 
