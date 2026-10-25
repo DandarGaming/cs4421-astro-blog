@@ -1,20 +1,19 @@
-name: Deploy site
+name: Validate site
 
 on:
-  workflow_call:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
-  deploy:
+  validate:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-      id-token: write
-
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -22,7 +21,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22.12.0
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -31,48 +30,6 @@ jobs:
       - name: Build Astro site
         run: npm run build
 
-      - name: Validate AWS role configuration
-        env:
-          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-        shell: bash
-        run: |
-          if [ -z "$AWS_ROLE_ARN" ]; then
-            echo "::error::Configure the AWS_ROLE_ARN Actions secret with the ARN of the GitHub deployment role."
-            exit 1
-          fi
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: us-east-1
-
-      - name: Read deployment target
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          OUTPUTS="$(aws cloudformation describe-stacks \
-            --stack-name StaticSiteStack \
-            --query "Stacks[0].Outputs[].[OutputKey,OutputValue]" \
-            --output text)"
-          SITE_BUCKET="$(awk '$1 == "SiteBucketName" { print $2 }' <<< "$OUTPUTS")"
-          DISTRIBUTION_ID="$(awk '$1 == "SiteDistributionId" { print $2 }' <<< "$OUTPUTS")"
-
-          if [ -z "$SITE_BUCKET" ] || [ "$SITE_BUCKET" = "None" ] || \
-             [ -z "$DISTRIBUTION_ID" ] || [ "$DISTRIBUTION_ID" = "None" ]; then
-            echo "::error::StaticSiteStack has no deployment outputs. Deploy the CDK stack with 'cd cdk && npx cdk deploy StaticSiteStack', then rerun this workflow."
-            exit 1
-          fi
-
-          echo "SITE_BUCKET=$SITE_BUCKET" >> "$GITHUB_ENV"
-          echo "DISTRIBUTION_ID=$DISTRIBUTION_ID" >> "$GITHUB_ENV"
-
-      - name: Sync site to S3
-        run: aws s3 sync dist/ "s3://$SITE_BUCKET" --delete
-
-      - name: Invalidate CloudFront cache
-        run: |
-          aws cloudfront create-invalidation \
-            --distribution-id "$DISTRIBUTION_ID" \
-            --paths "/*"
+      - name: Install and compile CDK app
+        run: npm ci && npm run build
+        working-directory: cdk

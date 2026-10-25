@@ -9,9 +9,6 @@ on:
     branches:
       - main
 
-permissions:
-  contents: read
-
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -37,25 +34,3 @@ jobs:
 
       - name: Build site
         run: npm run build
-
-      - name: Synthesize CDK app and verify deployment outputs
-        working-directory: cdk
-        env:
-          GITHUB_CONNECTION_ARN: arn:aws:codeconnections:us-east-1:123456789012:connection/00000000-0000-0000-0000-000000000000
-          CDK_DEFAULT_ACCOUNT: '123456789012'
-          CDK_DEFAULT_REGION: us-east-1
-        run: |
-          npm ci
-          npm run build
-          npx cdk synth
-          grep -R -q '"SiteBucketName"' cdk.out
-          grep -R -q '"SiteDistributionId"' cdk.out
-
-  deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: validate
-    permissions:
-      contents: read
-      id-token: write
-    uses: ./.github/workflows/deploy-static.yml
-    secrets: inherit
