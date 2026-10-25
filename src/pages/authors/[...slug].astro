@@ -5,6 +5,7 @@ import BaseHead from '../../components/BaseHead.astro';
 import Footer from '../../components/Footer.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
 import Header from '../../components/Header.astro';
+import SocialLinks from '../../components/SocialLinks.astro';
 import { SITE_TITLE } from '../../consts';
 
 export async function getStaticPaths() {
@@ -48,19 +49,7 @@ const posts = author
 								<p class="eyebrow">AUTHOR PROFILE</p>
 								<h1 id="author-name">{author.data.name}<span>.</span></h1>
 								<p class="bio">{author.data.bio}</p>
-								{
-									author.data.socialLinks.length > 0 && (
-										<nav aria-label={`${author.data.name}'s social links`}>
-											<ul class="social-links">
-												{author.data.socialLinks.map(({ label, url }) => (
-													<li>
-														<a href={url} rel="me noopener noreferrer">{label}</a>
-													</li>
-												))}
-											</ul>
-										</nav>
-									)
-								}
+								<SocialLinks name={author.data.name} links={author.data.socialLinks} />
 							</div>
 						</header>
 
@@ -153,19 +142,6 @@ const posts = author
 		max-width: 680px;
 		margin-bottom: 16px;
 		color: #aab3c5;
-	}
-
-	.social-links {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.75em 1em;
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.social-links a {
-		font-size: 0.86rem;
 	}
 
 	.author-posts {
