@@ -11,7 +11,7 @@
 	--box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), 0 0 30px rgba(72, 184, 255, 0.08);
 	background: #05060a;
 	color: #dce2ed;
-	font-family: var(--font-atkinson), sans-serif;
+	font-family: 'Courier New', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 	font-synthesis: none;
 	text-rendering: optimizeLegibility;
 }
@@ -38,7 +38,7 @@ body {
 
 body,
 button {
-	font-family: var(--font-atkinson), sans-serif;
+	font-family: 'Courier New', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 main {

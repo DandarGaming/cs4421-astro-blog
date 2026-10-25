@@ -14,8 +14,6 @@ Features:
 - ✅ Sitemap support
 - ✅ RSS Feed support
 - ✅ Markdown & MDX support
-- ✅ Static, client-side search across post titles and descriptions
-- ✅ Author directory and statically generated author profiles
 
 ## 🚀 Project Structure
 
@@ -43,24 +41,6 @@ The `src/content/` directory contains "collections" of related Markdown and MDX 
 
 Any static assets, like images, can be placed in the `public/` directory.
 
-## Categorizing blog posts
-
-Blog post frontmatter may include a category and a list of tags. Both are
-optional, so existing posts without topic metadata continue to work. For
-example:
-
-```yaml
-category: Guides
-tags:
-  - Astro
-  - Markdown
-```
-
-Topic links appear in the journal and on each post. Each tag and category has a
-pre-rendered archive at `/blog/tags/<topic>/` or
-`/blog/categories/<topic>/`, so topic navigation works on the static S3 and
-CloudFront deployment.
-
 ## 🧞 Commands
 
 All commands are run from the root of the project, from a terminal:
@@ -76,112 +56,81 @@ All commands are run from the root of the project, from a terminal:
 
 ## AWS deployment
 
-For every push to `main`, GitHub Actions runs the lint, test, site-build, and
-CDK-build checks, then deploys the static site if they pass. The deployment
-builds the site, syncs `dist/` to S3, and invalidates the CloudFront cache.
-GitHub authenticates to AWS with OpenID Connect; do not store long-lived AWS
-access keys in GitHub.
+The CDK app defines an AWS CodePipeline that watches `main` in
+`dandargaming/cs4421-astro-blog`. Each push builds the Astro site, synthesizes
+the CDK app, and deploys the `StaticSiteStack` to S3 and CloudFront. GitHub
+Actions only runs validation; AWS credentials are not stored in GitHub.
+The pipeline uses CodePipeline V2 push triggers, which are billed per action
+execution minute; see [AWS CodePipeline pricing](https://aws.amazon.com/codepipeline/pricing/).
 
 The production site is statically generated. Blog post routes are rendered
 during the build, and the CloudFront distribution rewrites clean URLs to their
 generated `index.html` files. Request-time server rendering and runtime
 process-health details are not available on this S3 deployment.
 
+## Music player and Supabase
+
+The home page includes a neon music player above the hero section. It reads
+published rows from `public.songs` and creates Storage URLs using the `music`
+bucket. The SQL schema and read policy are in [`supabase/music.sql`](./supabase/music.sql).
+
+1. Run `supabase/music.sql` in the Supabase SQL Editor.
+2. Create a Storage bucket named `music`. Use paths such as
+   `Adolescents/cover.jpg` and `Adolescents/01-track-title.mp3`.
+3. Add the connection values to a local `.env` file using
+   [`.env.example`](./.env.example):
+
+   ```dotenv
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_KEY=your-publishable-key
+   ```
+
+   The app also accepts the `PUBLIC_SUPABASE_URL` and
+   `PUBLIC_SUPABASE_PUBLISHABLE_KEY` names if you prefer Astro's public
+   variable convention.
+
+4. Insert metadata into `public.songs`, leaving `published` as `false` until
+   the tracks and artwork are licensed for public website playback/display.
+5. Set `published` to `true` only for approved rows and run `npm run build`.
+
+This site is deployed statically, so Supabase metadata is read during the
+build. Publishing or changing tracks requires another deployment. The
+publishable key is safe for browser use when Row Level Security is configured;
+never add a Supabase service-role key to `.env`, source code, or frontend
+configuration.
+
 ### One-time setup
 
-1. Configure AWS credentials locally with permission to bootstrap CDK and
-   deploy the site stack. Build the site, then from PowerShell bootstrap the
-   selected account and region and deploy `StaticSiteStack`:
+1. In the AWS Console, create an **AWS CodeConnections** connection (formerly
+   CodeStar Connections) to GitHub and complete the GitHub authorization. Wait
+   until the connection status is **Available**, then copy its ARN.
+2. Configure AWS credentials locally with permission to bootstrap CDK and
+   create the pipeline and its resources. For an access key, set its values
+   only in your local PowerShell session; do not paste them into source files
+   or commit them. Prefer temporary credentials or an AWS CLI profile when
+   available.
+3. In PowerShell, set the credentials, account, region, and authorized
+   connection ARN, then from the repository root bootstrap the selected AWS
+   account and region and deploy the pipeline:
 
    ```powershell
+   $env:AWS_ACCESS_KEY_ID = "YOUR_ACCESS_KEY_ID"
+   $env:AWS_SECRET_ACCESS_KEY = "YOUR_SECRET_ACCESS_KEY"
    $env:CDK_DEFAULT_ACCOUNT = "YOUR_ACCOUNT_ID"
    $env:CDK_DEFAULT_REGION = "YOUR_AWS_REGION"
-   npm ci
-   npm run build
+   $env:GITHUB_CONNECTION_ARN = "arn:aws:codestar-connections:REGION:ACCOUNT_ID:connection/CONNECTION_ID"
    cd cdk
-   npm ci
    npx cdk bootstrap
-   npx cdk deploy StaticSiteStack
+   npx cdk deploy AstroBlogPipelineStack
    ```
 
-   Use an AWS CLI profile or temporary credentials rather than putting
-   credentials in the repository. The CDK app requires the account and region
-   to match the credentials used for both commands. Re-run
-   `npx cdk deploy StaticSiteStack` after infrastructure changes; GitHub Actions
-   only publishes site files and does not deploy CDK infrastructure.
-2. In AWS IAM, create the GitHub Actions OIDC provider for
-   `token.actions.githubusercontent.com` if the account does not already have
-   one. Create a role with this trust policy, replacing the account ID:
+   Use your real connection ARN. Both commands must use the same AWS account
+   and region; the CDK app requires the connection ARN for either command.
 
-   ```json
-   {
-     "Version": "2012-10-17",
-     "Statement": [{
-       "Effect": "Allow",
-       "Principal": {
-         "Federated": "arn:aws:iam::ACCOUNT_ID:oidc-provider/token.actions.githubusercontent.com"
-       },
-       "Action": "sts:AssumeRoleWithWebIdentity",
-       "Condition": {
-         "StringEquals": {
-           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
-         },
-         "StringLike": {
-           "token.actions.githubusercontent.com:sub": "repo:dandargaming/cs4421-astro-blog:ref:refs/heads/main"
-         }
-       }
-     }]
-   }
-   ```
-
-3. Attach a permissions policy to the role, scoped to the bucket and
-   distribution created by `StaticSiteStack`. The stack outputs
-   `SiteBucketName` and `SiteDistributionId`; use those values in place of the
-   placeholders below:
-
-   ```json
-   {
-     "Version": "2012-10-17",
-     "Statement": [
-       {
-         "Effect": "Allow",
-         "Action": "cloudformation:DescribeStacks",
-         "Resource": "arn:aws:cloudformation:REGION:ACCOUNT_ID:stack/StaticSiteStack/*"
-       },
-       {
-         "Effect": "Allow",
-         "Action": ["s3:ListBucket", "s3:ListBucketMultipartUploads"],
-         "Resource": "arn:aws:s3:::SITE_BUCKET"
-       },
-       {
-         "Effect": "Allow",
-         "Action": [
-           "s3:PutObject",
-           "s3:DeleteObject",
-           "s3:AbortMultipartUpload",
-           "s3:ListMultipartUploadParts"
-         ],
-         "Resource": "arn:aws:s3:::SITE_BUCKET/*"
-       },
-       {
-         "Effect": "Allow",
-         "Action": "cloudfront:CreateInvalidation",
-         "Resource": "arn:aws:cloudfront::ACCOUNT_ID:distribution/DISTRIBUTION_ID"
-       }
-     ]
-   }
-   ```
-
-4. In the GitHub repository settings, add the role ARN as the
-   `AWS_ROLE_ARN` Actions secret. The GitHub Actions deployment is configured
-   to use `us-east-1`, so deploy `StaticSiteStack` to that same AWS region.
-
-After setup, every push to `main` builds and publishes the site. For an
-existing installation of the former CodePipeline deployment, first deploy
-`StaticSiteStack` from this CDK app in the same AWS account and region so it
-publishes the `SiteBucketName` and `SiteDistributionId` outputs. Once GitHub
-Actions has deployed successfully, disable or delete the old
-`AstroBlogPipelineStack` so only one pipeline deploys production.
+After the pipeline is deployed, pushes to `main` trigger site deployments.
+The first deployment may take several minutes. The `StaticSiteStack` uses the
+same stack name as the original CDK site stack, so deploy into its existing
+AWS account and region if you already deployed the site.
 
 ## 👀 Want to learn more?
 
