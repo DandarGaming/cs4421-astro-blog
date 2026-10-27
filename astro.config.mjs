@@ -1,36 +1,14 @@
 // @ts-check
 
-import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
-import { defineConfig, fontProviders } from 'astro/config';
+import { defineConfig } from 'astro/config';
+import { STATIC_SITE_URL, sharedConfig } from './astro.shared.mjs';
 
-// https://astro.build/config
+// Statically generated build, deployed to S3 + CloudFront by cdk/lib/static-site-stack.ts.
+// For the server-rendered build, see astro.ssr.config.mjs.
 export default defineConfig({
-	site: 'https://d1wb73pnm22nqf.cloudfront.net',
+	site: STATIC_SITE_URL,
 	output: 'static',
-	integrations: [mdx(), sitemap()],
-	fonts: [
-		{
-			provider: fontProviders.local(),
-			name: 'Atkinson',
-			cssVariable: '--font-atkinson',
-			fallbacks: ['sans-serif'],
-			options: {
-				variants: [
-					{
-						src: ['./src/assets/fonts/atkinson-regular.woff'],
-						weight: 400,
-						style: 'normal',
-						display: 'swap',
-					},
-					{
-						src: ['./src/assets/fonts/atkinson-bold.woff'],
-						weight: 700,
-						style: 'normal',
-						display: 'swap',
-					},
-				],
-			},
-		},
-	],
+	...sharedConfig,
+	integrations: [...sharedConfig.integrations, sitemap()],
 });
