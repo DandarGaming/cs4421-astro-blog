@@ -182,6 +182,10 @@ export class SsrSiteStack extends cdk.Stack {
 		// GitHub Actions assumes this role over OIDC, so no AWS keys live in GitHub.
 		const githubRepository = props.githubRepository ?? 'DandarGaming/cs4421-astro-blog';
 		const githubBranch = props.githubBranch ?? 'main';
+		const immutableGitHubRepository =
+			githubRepository === 'DandarGaming/cs4421-astro-blog'
+				? 'DandarGaming@103852756/cs4421-astro-blog@1362457966'
+				: undefined;
 
 		const provider = props.githubOidcProviderArn
 			? iam.OpenIdConnectProvider.fromOpenIdConnectProviderArn(
@@ -202,7 +206,16 @@ export class SsrSiteStack extends cdk.Stack {
 					'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com',
 				},
 				StringLike: {
-					'token.actions.githubusercontent.com:sub': `repo:${githubRepository}:ref:refs/heads/${githubBranch}`,
+					'token.actions.githubusercontent.com:sub': [
+						// Keep the legacy subject for repositories that still use it.
+						`repo:${githubRepository}:ref:refs/heads/${githubBranch}`,
+						// GitHub now uses immutable-ID subjects for this repository.
+						...(immutableGitHubRepository
+							? [
+								`repo:${immutableGitHubRepository}:ref:refs/heads/${githubBranch}`,
+							]
+							: []),
+					],
 				},
 			}),
 			maxSessionDuration: cdk.Duration.hours(1),

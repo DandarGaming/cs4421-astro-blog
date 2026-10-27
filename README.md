@@ -169,9 +169,18 @@ OIDC, so no AWS keys live in GitHub. Set one repository variable:
 | `AWS_DEPLOY_ROLE_ARN` | the `DeployRoleArn` output of `SsrSiteStack` |
 | `AWS_REGION` (optional) | defaults to `us-east-1` |
 
-The role trusts only `repo:DandarGaming/cs4421-astro-blog:ref:refs/heads/main`,
-and can only push to the `astro-ssr` repository, register task definitions,
-update that one service, pass the two task roles, and read the log group.
+The role trusts this repository's `main` branch using both its legacy subject
+and its current immutable-ID subject
+(`repo:DandarGaming@103852756/cs4421-astro-blog@1362457966:ref:refs/heads/main`).
+GitHub changed the default OIDC subject format for repositories created after
+July 15, 2026; the IAM trust policy needs both patterns while older subject
+formats are still in use. The role can only push to the `astro-ssr` repository,
+register task definitions, update that one service, pass the two task roles, and
+read the log group.
+
+After changing this trust policy in CDK, redeploy `SsrSiteStack` using AWS
+credentials with permission to update IAM. The IAM provider and role must also
+exist in the same AWS account as the `AWS_DEPLOY_ROLE_ARN` repository variable.
 
 The workflow runs the tests before it touches AWS, then builds `Dockerfile.ssr`,
 pushes both tags, registers a task definition revision, updates the service,
