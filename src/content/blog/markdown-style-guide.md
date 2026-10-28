@@ -1,215 +1,37 @@
 ---
-title: 'Markdown Style Guide'
-description: 'Here is a sample of some basic Markdown syntax that can be used when writing Markdown content in Astro.'
-pubDate: 'Jun 19 2024'
-heroImage: '../../assets/blog-placeholder-1.jpg'
-author: 'dandar'
+title: "Mizo AI: What I Built, and Why It Did Not Win"
+description: "How Mizo AI started as a BT Young Scientist entry, why I did not take it to a mobile platform, and what the months of training, restructuring, and more data taught me."
+pubDate: 2026-10-28
+author: dandar
+heroImage: '../../assets/qAGxeAAAAAZJREFUAwBMZvcSg749SwAAAABJRU5ErkJggg.png'
 ---
 
-Here is a sample of some basic Markdown syntax that can be used when writing Markdown content in Astro.
+Mizo AI began as a science fair project.
 
-## Headings
+When I first put it together, I was entering the BT Young Scientist and Technology Exhibition with the idea that I could build something useful: a model that could recognize Irish Sign Language. That was the pitch. Build a model, train it, show that it works, and maybe make something that mattered a little beyond the fair itself.
 
-The following HTML `<h1>`—`<h6>` elements represent six levels of section headings. `<h1>` is the highest section level while `<h6>` is the lowest.
+I did not win.
 
-# H1
+That was the first lesson, and it was a useful one. The failure was not because the idea was bad or because the work was meaningless. It was because I was aiming at the wrong thing. I wanted the whole thing to live on a mobile platform, as a real app people could actually use. That sounded like the right goal at the time. In practice, it was a lot to ask from a first version, and it spread the project too thin before I had a solid base to stand on.
 
-## H2
+The local model was the part I understood best. I could train it, test it, watch it behave, and make it better. The mobile version was where everything started to wobble. I kept trying to make it work as an app before the model underneath it was ready to be ported like that. It was a mistake I made more than once: trying to ship the destination before the road was finished.
 
-### H3
+That meant a lot of training.
 
-#### H4
+Training is where the project went from "this is an idea" to "this is something I have to live with every day." I spent a lot of time watching the model struggle, then adjusting, then trying again. Not because I expected it to magically improve, but because the weak spots told me what to fix. A model is honest in a way most projects are not. If something is off, it shows up in the results.
 
-##### H5
+Restructuring came after the training, or maybe during it. I kept changing how the model was shaped, how the data moved through it, and how much of the work I was asking it to do at once. That part was less glamorous than the idea of "building an AI," but it was where the project actually became something real. You do not get very far with a plan you are unwilling to change.
 
-###### H6
+Then came the datasets.
 
-## Paragraph
+I added more data because the model needed it. Not just more of the same, but more variation, more examples, and more ways of failing. If a model only knows one kind of situation, it only works in one kind of situation. That is the part of machine learning that sounds simple until you are the one trying to deal with it. Adding datasets was not a shortcut. It was the slow work of making the model less narrow.
 
-Xerum, quo qui aut unt expliquam qui dolut labo. Aque venitatiusda cum, voluptionse latur sitiae dolessi aut parist aut dollo enim qui voluptate ma dolestendit peritin re plis aut quas inctum laceat est volestemque commosa as cus endigna tectur, offic to cor sequas etum rerum idem sintibus eiur? Quianimin porecus evelectur, cum que nis nust voloribus ratem aut omnimi, sitatur? Quiatem. Nam, omnis sum am facea corem alique molestrunt et eos evelece arcillit ut aut eos eos nus, sin conecerem erum fuga. Ri oditatquam, ad quibus unda veliamenimin cusam et facea ipsamus es exerum sitate dolores editium rerore eost, temped molorro ratiae volorro te reribus dolorer sperchicium faceata tiustia prat.
+I also had to accept that more data alone would not save a weak approach. The data helps. It just does not do the whole job for you.
 
-Itatur? Quiatae cullecum rem ent aut odis in re eossequodi nonsequ idebis ne sapicia is sinveli squiatum, core et que aut hariosam ex eat.
+If you want the technical side, that is what the Mizo AI repository is for. The blog post is not where I want to write out every detail of the model, the training setup, or the restructuring. The repo is the place for that. This is where I want to talk about why the project exists and why I keep working on it even after the first version did not go where I wanted.
 
-## Images
+Mizo AI did not win BT Young Scientist. I still think the project is worth continuing.
 
-### Syntax
+I have learned to be more honest about the shape of it now. It is not a finished app. It is not a polished product. It is a model, some data, and a lot of lessons I did not have when I started. I failed at the first version I imagined for it, but I did not fail at the whole thing.
 
-```markdown
-![Alt text](./full/or/relative/path/of/image)
-```
-
-### Output
-
-![blog placeholder](../../assets/blog-placeholder-about.jpg)
-
-## Blockquotes
-
-The blockquote element represents content that is quoted from another source, optionally with a citation which must be within a `footer` or `cite` element, and optionally with in-line changes such as annotations and abbreviations.
-
-### Blockquote without attribution
-
-#### Syntax
-
-```markdown
-> Tiam, ad mint andaepu dandae nostion secatur sequo quae.  
-> **Note** that you can use _Markdown syntax_ within a blockquote.
-```
-
-#### Output
-
-> Tiam, ad mint andaepu dandae nostion secatur sequo quae.  
-> **Note** that you can use _Markdown syntax_ within a blockquote.
-
-### Blockquote with attribution
-
-#### Syntax
-
-```markdown
-> Don't communicate by sharing memory, share memory by communicating.<br>
-> — <cite>Rob Pike[^1]</cite>
-```
-
-#### Output
-
-> Don't communicate by sharing memory, share memory by communicating.<br>
-> — <cite>Rob Pike[^1]</cite>
-
-[^1]: The above quote is excerpted from Rob Pike's [talk](https://www.youtube.com/watch?v=PAAkCSZUG1c) during Gopherfest, November 18, 2015.
-
-## Tables
-
-### Syntax
-
-```markdown
-| Italics   | Bold     | Code   |
-| --------- | -------- | ------ |
-| _italics_ | **bold** | `code` |
-```
-
-### Output
-
-| Italics   | Bold     | Code   |
-| --------- | -------- | ------ |
-| _italics_ | **bold** | `code` |
-
-## Code Blocks
-
-### Syntax
-
-we can use 3 backticks ``` in new line and write snippet and close with 3 backticks on new line and to highlight language specific syntax, write one word of language name after first 3 backticks, for eg. html, javascript, css, markdown, typescript, txt, bash
-
-````markdown
-```html
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Example HTML5 Document</title>
-  </head>
-  <body>
-    <p>Test</p>
-  </body>
-</html>
-```
-````
-
-### Output
-
-```html
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Example HTML5 Document</title>
-  </head>
-  <body>
-    <p>Test</p>
-  </body>
-</html>
-```
-
-## List Types
-
-### Ordered List
-
-#### Syntax
-
-```markdown
-1. First item
-2. Second item
-3. Third item
-```
-
-#### Output
-
-1. First item
-2. Second item
-3. Third item
-
-### Unordered List
-
-#### Syntax
-
-```markdown
-- List item
-- Another item
-- And another item
-```
-
-#### Output
-
-- List item
-- Another item
-- And another item
-
-### Nested list
-
-#### Syntax
-
-```markdown
-- Fruit
-  - Apple
-  - Orange
-  - Banana
-- Dairy
-  - Milk
-  - Cheese
-```
-
-#### Output
-
-- Fruit
-  - Apple
-  - Orange
-  - Banana
-- Dairy
-  - Milk
-  - Cheese
-
-## Other Elements — abbr, sub, sup, kbd, mark
-
-### Syntax
-
-```markdown
-<abbr title="Graphics Interchange Format">GIF</abbr> is a bitmap image format.
-
-H<sub>2</sub>O
-
-X<sup>n</sup> + Y<sup>n</sup> = Z<sup>n</sup>
-
-Press <kbd>CTRL</kbd> + <kbd>ALT</kbd> + <kbd>Delete</kbd> to end the session.
-
-Most <mark>salamanders</mark> are nocturnal, and hunt for insects, worms, and other small creatures.
-```
-
-### Output
-
-<abbr title="Graphics Interchange Format">GIF</abbr> is a bitmap image format.
-
-H<sub>2</sub>O
-
-X<sup>n</sup> + Y<sup>n</sup> = Z<sup>n</sup>
-
-Press <kbd>CTRL</kbd> + <kbd>ALT</kbd> + <kbd>Delete</kbd> to end the session.
-
-Most <mark>salamanders</mark> are nocturnal, and hunt for insects, worms, and other small creatures.
+The mobile platform was the wrong mountain for that first attempt. The local model was the one I could actually carry. These days, when I look at the project, I see both: the one that did not work out, and the one that taught me how to keep going.

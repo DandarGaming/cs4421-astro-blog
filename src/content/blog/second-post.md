@@ -1,17 +1,23 @@
 ---
-title: 'Second post'
-description: 'Lorem ipsum dolor sit amet'
-pubDate: 'Jul 15 2022'
-heroImage: '../../assets/blog-placeholder-4.jpg'
-author: 'dandar'
+title: "Dithering, Pixel by Pixel"
+description: "A first look at the dithering application I am building, and the physical-media experiment that sent me down this path."
+pubDate: 2026-10-28
+author: dandar
+heroImage: '../../assets/background2.png'
 ---
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Vitae ultricies leo integer malesuada nunc vel risus commodo viverra. Adipiscing enim eu turpis egestas pretium. Euismod elementum nisi quis eleifend quam adipiscing. In hac habitasse platea dictumst vestibulum. Sagittis purus sit amet volutpat. Netus et malesuada fames ac turpis egestas. Eget magna fermentum iaculis eu non diam phasellus vestibulum lorem. Varius sit amet mattis vulputate enim. Habitasse platea dictumst quisque sagittis. Integer quis auctor elit sed vulputate mi. Dictumst quisque sagittis purus sit amet.
+A few months ago I made a small digital-art piece that started as a Greek statue and ended up as a layered, dithered poster. That piece became the first entry in this blog: ["Physical Media, the Way to Go."](https://d1wb73pnm22nqf.cloudfront.net/blog/first-post/) I wrote it mostly to capture a mood, but it had a side effect I did not expect: I kept coming back to the idea of turning an image into something you could almost feel as a physical object.
 
-Morbi tristique senectus et netus. Id semper risus in hendrerit gravida rutrum quisque non tellus. Habitasse platea dictumst quisque sagittis purus sit amet. Tellus molestie nunc non blandit massa. Cursus vitae congue mauris rhoncus. Accumsan tortor posuere ac ut. Fringilla urna porttitor rhoncus dolor. Elit ullamcorper dignissim cras tincidunt lobortis. In cursus turpis massa tincidunt dui ut ornare lectus. Integer feugiat scelerisque varius morbi enim nunc. Bibendum neque egestas congue quisque egestas diam. Cras ornare arcu dui vivamus arcu felis bibendum. Dignissim suspendisse in est ante in nibh mauris. Sed tempus urna et pharetra pharetra massa massa ultricies mi.
+That post is the reason I am starting this dithering application.
 
-Mollis nunc sed id semper risus in. Convallis a cras semper auctor neque. Diam sit amet nisl suscipit. Lacus viverra vitae congue eu consequat ac felis donec. Egestas integer eget aliquet nibh praesent tristique magna sit amet. Eget magna fermentum iaculis eu non diam. In vitae turpis massa sed elementum. Tristique et egestas quis ipsum suspendisse ultrices. Eget lorem dolor sed viverra ipsum. Vel turpis nunc eget lorem dolor sed viverra. Posuere ac ut consequat semper viverra nam. Laoreet suspendisse interdum consectetur libero id faucibus. Diam phasellus vestibulum lorem sed risus ultricies tristique. Rhoncus dolor purus non enim praesent elementum facilisis. Ultrices tincidunt arcu non sodales neque. Tempus egestas sed sed risus pretium quam vulputate. Viverra suspendisse potenti nullam ac tortor vitae purus faucibus ornare. Fringilla urna porttitor rhoncus dolor purus non. Amet dictum sit amet justo donec enim.
+The app is still early. Right now it is mostly a place for me to experiment with different dithering approaches—ordered dithering, error diffusion, and variations on those—without having to open Photoshop every time. The first version does not do much beyond loading an image, letting me pick a palette and a method, and exporting the result. That is enough for now. Most of what I am learning comes from the places where the output looks wrong.
 
-Mattis ullamcorper velit sed ullamcorper morbi tincidunt. Tortor posuere ac ut consequat semper viverra. Tellus mauris a diam maecenas sed enim ut sem viverra. Venenatis urna cursus eget nunc scelerisque viverra mauris in. Arcu ac tortor dignissim convallis aenean et tortor at. Curabitur gravida arcu ac tortor dignissim convallis aenean et tortor. Egestas tellus rutrum tellus pellentesque eu. Fusce ut placerat orci nulla pellentesque dignissim enim sit amet. Ut enim blandit volutpat maecenas volutpat blandit aliquam etiam. Id donec ultrices tincidunt arcu. Id cursus metus aliquam eleifend mi.
+The dithering itself is the part I am most interested in. When you reduce an image to a smaller palette, you have to decide what to throw away. A simple threshold loses a lot. Ordered dithering introduces a pattern that spreads the error over a fixed grid. Error diffusion pushes the leftover error into neighboring pixels, which is why it tends to give that grainy, almost-printed look. I have been playing with both, and with combining them in ways that do not make much sense on paper but look right in an image.
 
-Tempus quam pellentesque nec nam aliquam sem. Risus at ultrices mi tempus imperdiet. Id porta nibh venenatis cras sed felis eget velit. Ipsum a arcu cursus vitae. Facilisis magna etiam tempor orci eu lobortis elementum. Tincidunt dui ut ornare lectus sit. Quisque non tellus orci ac. Blandit libero volutpat sed cras. Nec tincidunt praesent semper feugiat nibh sed pulvinar proin gravida. Egestas integer eget aliquet nibh praesent tristique magna.
+One thing I have found is that dithering is less about the algorithm than the whole pipeline around it. The same image, dithered with the same settings, can feel completely different depending on the palette, the output size, and even the paper or screen you view it on. That is probably why the physical-media thread from my first blog post keeps coming up. The goal was never really to make a perfect copy. It was to make something that looked like a decision had been made.
+
+That is also why I have not rushed to add the obvious features. A slider for the dither strength is easy to build. A tool that helps you choose a palette worth dithering into is harder, and I think it matters more. I have been spending more time looking at palettes than at the dithering code itself. For now the app is a sketchbook: load something, break it, try again, export the interesting results.
+
+I expect the next steps to be small. Better palette handling. A clearer way to compare two versions side by side. Maybe a way to chain a few passes together without making the whole thing unreadable. If it grows into something more useful than a toy, that will be a nice surprise. If not, it is still a good excuse to keep making posters.
+
+The project lives in pieces. The code is on GitHub, and the README there will have the more technical side of the current state. This post is mostly the part I would have written down anyway: why I started it, and why I am not finished yet.
