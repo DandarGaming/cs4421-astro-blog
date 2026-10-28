@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/BlogPost.astro';
+import SocialLinks from '../components/SocialLinks.astro';
 ---
 
 <Layout
@@ -25,7 +26,7 @@ import Layout from '../layouts/BlogPost.astro';
 		</p>
 		<p>
 			This blog is my notebook along the way: a place for project updates, technical experiments,
-			coursework discoveries, and things I’d like to remember.
+			experimental things, coursework discoveries, and things I’d like to remember.
 		</p>
 	</div>
 
@@ -33,27 +34,39 @@ import Layout from '../layouts/BlogPost.astro';
 	<ul class="project-list">
 		<li>
 			<a href="https://github.com/DandarGaming/Mizo" target="_blank" rel="noopener noreferrer">Mizo AI</a>
-			<span>My AI project. Check GitHub for the code and current details.</span>
+			<span>An Irish Sign Language Recognition Model that I currently am developing when I have free time</span>
 		</li>
 		<li>
-			<a href="https://github.com/DandarGaming/portfolio" target="_blank" rel="noopener noreferrer">Portfolio</a>
-			<span>A home for my projects and work.</span>
+			<a href="/blog/">Blog</a>
+			<span>A home for my projects, passions and work</span>
 		</li>
 	</ul>
 
 	<h2>Tools I’ve been exploring</h2>
 	<p class="skill-list" aria-label="Programming languages and technologies">
+		<span>Linux</span>
+		<span>Jupyter Notebook</span>
 		<span>Java</span>
 		<span>JavaScript</span>
 		<span>Python</span>
+		<span>C</span>
+		<span>Git</span>
+		<span>Assembly</span>
+		<span>Astro</span>
 		<span>TensorFlow</span>
-		<span>CSS</span>
+		<span>CSS3</span>
 	</p>
 
-	<p class="profile-cta">
-		You can find my projects and what I’m working on at{' '}
-		<a href="https://github.com/DandarGaming" target="_blank" rel="me noopener noreferrer">my GitHub</a>.
-	</p>
+	<div class="profile-cta">
+		<p>Find me and my projects around the web:</p>
+		<SocialLinks
+			name="Dandar"
+			links={[
+				{ label: 'GitHub', url: 'https://github.com/DandarGaming', icon: 'github' },
+				{ label: 'LinkedIn', url: 'https://www.linkedin.com/in/daniel-sukhanov/', icon: 'linkedin' },
+			]}
+		/>
+	</div>
 </Layout>
 
 <style>
