@@ -1,78 +1,216 @@
-# Astro Starter Kit: Blog
+# cs4421-astro-blog
 
 [![CI](https://github.com/DandarGaming/cs4421-astro-blog/actions/workflows/ci.yml/badge.svg)](https://github.com/DandarGaming/cs4421-astro-blog/actions/workflows/ci.yml)
 [![Validate site](https://github.com/DandarGaming/cs4421-astro-blog/actions/workflows/deploy-static.yml/badge.svg)](https://github.com/DandarGaming/cs4421-astro-blog/actions/workflows/deploy-static.yml)
 [![Deploy container](https://github.com/DandarGaming/cs4421-astro-blog/actions/workflows/deploy-container.yml/badge.svg)](https://github.com/DandarGaming/cs4421-astro-blog/actions/workflows/deploy-container.yml)
 
-```sh
-npm create astro@latest -- --template blog
+## Overview
+
+A personal blog built with [Astro](https://docs.astro.build/). It publishes
+Markdown/MDX posts with authors, tags and archives, an RSS feed, a sitemap, a
+neon music player backed by [Supabase](https://supabase.com/), and a small
+admin area for drafting posts.
+
+The same codebase ships in two deployment flavors:
+
+| Flavor | Config | Runtime | Live URL |
+| --- | --- | --- | --- |
+| Static | `astro.config.mjs` (`output: 'static'`) | S3 + CloudFront | <https://www.danielsukhanov.me> |
+| Server-rendered (SSR) | `astro.ssr.config.mjs` (`output: 'server'`) | ECS Fargate behind an ALB | <https://app.danielsukhanov.me> |
+
+Both are provisioned with [AWS CDK](https://docs.aws.amazon.com/cdk/), and
+every push to `main` is built and deployed by CI/CD (see
+[Deployment](#deployment)).
+
+## Tech stack
+
+- [Astro 7](https://docs.astro.build/) with [MDX](https://mdxjs.com/) content
+  and content collections
+- [Astro Node adapter](https://docs.astro.build/en/guides/integrations-guide/node/)
+  (standalone mode) for the SSR build
+- [Supabase](https://supabase.com/) (PostgreSQL + Storage) for music player
+  metadata
+- [AWS CDK](https://docs.aws.amazon.com/cdk/) for infrastructure:
+  S3 + CloudFront, ECS Fargate, ALB, CodePipeline
+- [GitHub Actions](https://docs.github.com/en/actions) for CI/CD
+- [ESLint](https://eslint.org/) (`eslint-plugin-astro`,
+  `typescript-eslint`) and [Vitest](https://vitest.dev/) for quality checks
+
+## Prerequisites
+
+| Tool | Version | Needed for |
+| --- | --- | --- |
+| [Node.js](https://nodejs.org/) | **22.23.4 or newer** (pinned by `engines` in `package.json`) | everything |
+| npm | bundled with Node.js | installing dependencies, running scripts |
+| Git | any recent version | cloning, branching, PRs |
+| [Docker](https://www.docker.com/) | any recent version | building/running container images |
+| [AWS CLI](https://aws.amazon.com/cli/) + CDK | any recent version | deploying to AWS (maintainers only) |
+
+A Supabase project is only required for the music player and admin features;
+the site builds and runs without it.
+
+## Getting started
+
+```bash
+# 1. Clone your fork
+git clone https://github.com/<your-user>/cs4421-astro-blog.git
+cd cs4421-astro-blog
+
+# 2. Install dependencies (npm ci installs exactly what package-lock.json pins)
+npm ci
+
+# 3. Create your local environment file (optional, see "Environment variables")
+cp .env.example .env
+
+# 4. Start the dev server
+npm run dev
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+The site is now available at <http://localhost:4321>.
 
-Features:
+### Environment variables
 
-- ✅ Minimal styling (make it your own!)
-- ✅ 100/100 Lighthouse performance
-- ✅ SEO-friendly with canonical URLs and Open Graph data
-- ✅ Sitemap support
-- ✅ RSS Feed support
-- ✅ Markdown & MDX support
+Copy `.env.example` to `.env` and fill in the values:
 
-## 🚀 Project Structure
+| Variable | Purpose |
+| --- | --- |
+| `SUPABASE_URL` | Supabase project URL (also accepted as `PUBLIC_SUPABASE_URL`) |
+| `SUPABASE_KEY` | Supabase publishable/anon key (also accepted as `PUBLIC_SUPABASE_PUBLISHABLE_KEY`) |
 
-Inside of your Astro project, you'll see the following folders and files:
+Never commit a service-role key; the publishable key is safe for browser use
+when Row Level Security is enabled. See
+[Music player and Supabase](#music-player-and-supabase) for the database setup.
+
+## Development commands
+
+All commands run from the repository root:
+
+| Command | Action |
+| : | : |
+| `npm run dev` | Start the dev server at `localhost:4321` |
+| `npm run build` | Build the production static site to `./dist/` |
+| `npm run build:ssr` | Build the server-rendered site to `./dist/server/` |
+| `npm run start:ssr` | Run the built SSR server (`./dist/server/entry.mjs`) |
+| `npm run preview` | Preview the production build locally |
+| `npm run lint` | Run ESLint over the project |
+| `npm run test:unit` | Run the unit tests once (Vitest) |
+| `npm run test` | Run the unit tests in watch mode |
+| `npm run astro -- --help` | Run any Astro CLI command |
+
+### Running the project locally
+
+```bash
+npm run dev            # development server with hot reload
+```
+
+### Building the project
+
+```bash
+npm run build          # static site -> ./dist/
+npm run build:ssr      # SSR server  -> ./dist/server/entry.mjs
+```
+
+### Previewing the production build
+
+```bash
+npm run preview        # serve the static build locally
+```
+
+Or run the server-rendered build without Docker or AWS:
+
+```bash
+npm run build:ssr
+npm run start:ssr
+# http://localhost:4321 and http://localhost:4321/api/health
+```
+
+`/api/health` returns a JSON payload with `renderedAt` and `uptimeSeconds`;
+in the SSR build both change on every request.
+
+## Project structure
 
 ```text
-├── public/
+├── public/                  Static assets copied into the build as-is
 ├── src/
-│   ├── assets/
-│   ├── components/
-│   ├── content/
-│   ├── layouts/
-│   └── pages/
-├── astro.config.mjs
-├── README.md
-├── package.json
-└── tsconfig.json
+│   ├── assets/              Fonts and images processed by Astro
+│   ├── components/          UI components (Header, Footer, MusicPlayer, ...)
+│   ├── content/             Content collections: blog/ and authors/ (MD/MDX)
+│   ├── content.config.ts    Collection schemas and references
+│   ├── layouts/             Page layouts
+│   ├── lib/supabase.ts      Supabase client
+│   ├── pages/               Routes: index, about, blog/, authors/,
+│   │                        admin/, api/health.ts, rss.xml.js, 404.astro
+│   ├── scripts/             Browser-side scripts (admin)
+│   ├── styles/              Global stylesheets
+│   ├── utils/               Helpers (date, topics, admin) and their tests
+│   ├── consts.ts            Shared site constants
+│   └── middleware.ts        Structured one-line JSON request logs
+├── cdk/                     AWS CDK app: static, SSR image and SSR site stacks
+├── docs/adr/                Architecture Decision Records (see docs/adr/README.md)
+├── scripts/rollback.sh      Roll the ECS service back to an earlier revision
+├── supabase/music.sql       Database schema and read policy for the player
+├── .github/workflows/       CI, Validate site, Deploy container
+├── astro.config.mjs         Static build configuration
+├── astro.ssr.config.mjs     SSR build configuration
+├── astro.shared.mjs         Settings shared by both builds (integrations, fonts)
+├── Dockerfile               Static image (nginx)
+├── Dockerfile.ssr           SSR image (Node)
+└── sum.js / sum.test.js     Sample unit test
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Testing and linting
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+```bash
+npm run lint        # ESLint (flat config in eslint.config.js)
+npm run test:unit   # Vitest unit tests (src/utils/*.test.ts, sum.test.js)
+```
 
-The `src/content/` directory contains "collections" of related Markdown and MDX documents. Use `getCollection()` to retrieve posts from `src/content/blog/`, and type-check your frontmatter using an optional schema. See [Astro's Content Collections docs](https://docs.astro.build/en/guides/content-collections/) to learn more.
+CI (`.github/workflows/ci.yml`) runs both plus a production build on every
+push to `main` and on every pull request, so run them locally before opening a
+PR.
 
-Any static assets, like images, can be placed in the `public/` directory.
+## Documentation
 
-## 🧞 Commands
+- [ADR index](./docs/adr/README.md) — architecture decisions, including
+  [ADR-001: Transition to SSR and containers](./docs/adr/ADR-001-transition-to-ssr-and-containers.md)
+  and [ADR-002: Static S3 + CloudFront hosting](./docs/adr/ADR-002-static-s3-cloudfront.md)
+- [Astro documentation](https://docs.astro.build/)
+- [Supabase documentation](https://supabase.com/docs)
+- [AWS CDK documentation](https://docs.aws.amazon.com/cdk/)
 
-All commands are run from the root of the project, from a terminal:
+## Contributing
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+1. Branch from `main` (`git checkout -b <type>/<short-description>`).
+2. Make your changes, keeping commits focused.
+3. Run `npm run lint`, `npm run test:unit`, and `npm run build` locally.
+4. Open a pull request; CI must be green before review.
+5. Record structural decisions as an ADR in `docs/adr/` (see
+   [ADR-000 template](./docs/adr/ADR-000-template.md)).
 
-## AWS deployment
+## Deployment
 
-The CDK app defines an AWS CodePipeline that watches `main` in
-`dandargaming/cs4421-astro-blog`. Each push builds the Astro site, synthesizes
-the CDK app, and deploys the `StaticSiteStack` to S3 and CloudFront. GitHub
-Actions only runs validation; AWS credentials are not stored in GitHub.
-The pipeline uses CodePipeline V2 push triggers, which are billed per action
-execution minute; see [AWS CodePipeline pricing](https://aws.amazon.com/codepipeline/pricing/).
+### How deployment works
 
-The production static site is generated during the build, and the CloudFront
-distribution rewrites clean URLs to their generated `index.html` files. A
-second, server-rendered deployment lives in `SsrSiteStack`; see the next
-section for the three deployment URLs the project has to cover.
+An AWS CodePipeline watches `main` in this repository: each push builds the
+Astro site, synthesizes the CDK app, and deploys the `StaticSiteStack` to S3
+and CloudFront. GitHub Actions only runs validation; AWS credentials are not
+stored in GitHub. The pipeline uses CodePipeline V2 push triggers, which are
+billed per action execution minute; see
+[AWS CodePipeline pricing](https://aws.amazon.com/codepipeline/pricing/).
 
-## Static and server-rendered deployments
+GitHub Actions runs three workflows:
+
+| Workflow | File | Trigger | What it does |
+| --- | --- | --- | --- |
+| CI | `.github/workflows/ci.yml` | push to `main` / `feat/**`, PRs to `main` | lint, unit tests, static build |
+| Validate site | `.github/workflows/deploy-static.yml` | PRs and pushes | site validation |
+| Deploy container | `.github/workflows/deploy-container.yml` | push to `main` | tests, Docker build, push to ECR, update the ECS service |
+
+The static site's CloudFront distribution rewrites clean URLs to their
+generated `index.html` files. A second, server-rendered deployment lives in
+`SsrSiteStack`.
+
+### Static and server-rendered deployments
 
 Both deployments build from this repository, but from different configs:
 
@@ -150,7 +288,7 @@ export SUPABASE_URL=https://your-project.supabase.co
 export SUPABASE_KEY=your-publishable-key
 ```
 
-### Who owns the running image
+#### Who owns the running image
 
 - CDK owns the infrastructure and the baseline task definition, which pulls the
   moving `astro-ssr:stable` tag.
@@ -163,7 +301,7 @@ export SUPABASE_KEY=your-publishable-key
 - `scripts/rollback.sh` moves `stable` back to the revision it restores, so a
   rollback survives a later CDK deploy too.
 
-### GitHub Actions setup
+#### GitHub Actions setup
 
 The workflow is `.github/workflows/deploy-container.yml`. It authenticates with
 OIDC, so no AWS keys live in GitHub. Set one repository variable:
@@ -192,7 +330,7 @@ waits for `services-stable`, and finally checks that the service still runs the
 revision it asked for. If ECS rolled back because the new tasks never became
 healthy, that last step fails the job.
 
-### Alarms and the rollback drill
+#### Alarms and the rollback drill
 
 The ALB health check hits `/api/health` every 10 seconds and needs two successes
 to mark a task healthy; a task gets 15 seconds of grace at startup. Two failed
@@ -232,7 +370,7 @@ Drill 2, as run:
    revision, and waits for it to stabilise — typically under a minute once the
    unhealthy task has been detected.
 
-### Custom DNS and TLS
+#### Custom DNS and TLS
 
 After the service exists, add the record in Cloudflare:
 
@@ -249,51 +387,12 @@ the stack region, add the validation CNAME in Cloudflare, then set
 listeners forward to the same target group, so Cloudflare keeps working either
 way.
 
-Local check without AWS:
-
-```bash
-npm run build:ssr
-npm run start:ssr
-# http://localhost:4321 and http://localhost:4321/api/health
-```
-
 Roughly $25/month while it runs: about $16 for the ALB and about $9 for the
 always-on Fargate task, plus minimal data transfer. There is no NAT gateway, and
 the task sits in public subnets behind a security group that only accepts
 traffic from the load balancer.
 
-## Music player and Supabase
-
-The home page includes a neon music player above the hero section. It reads
-published rows from `public.songs` and creates Storage URLs using the `music`
-bucket. The SQL schema and read policy are in [`supabase/music.sql`](./supabase/music.sql).
-
-1. Run `supabase/music.sql` in the Supabase SQL Editor.
-2. Create a Storage bucket named `music`. Use paths such as
-   `Adolescents/cover.jpg` and `Adolescents/01-track-title.mp3`.
-3. Add the connection values to a local `.env` file using
-   [`.env.example`](./.env.example):
-
-   ```dotenv
-   SUPABASE_URL=https://your-project.supabase.co
-   SUPABASE_KEY=your-publishable-key
-   ```
-
-   The app also accepts the `PUBLIC_SUPABASE_URL` and
-   `PUBLIC_SUPABASE_PUBLISHABLE_KEY` names if you prefer Astro's public
-   variable convention.
-
-4. Insert metadata into `public.songs`, leaving `published` as `false` until
-   the tracks and artwork are licensed for public website playback/display.
-5. Set `published` to `true` only for approved rows and run `npm run build`.
-
-This site is deployed statically, so Supabase metadata is read during the
-build. Publishing or changing tracks requires another deployment. The
-publishable key is safe for browser use when Row Level Security is configured;
-never add a Supabase service-role key to `.env`, source code, or frontend
-configuration.
-
-### One-time setup
+### One-time setup (static pipeline)
 
 1. In the AWS Console, create an **AWS CodeConnections** connection (formerly
    CodeStar Connections) to GitHub and complete the GitHub authorization. Wait
@@ -326,10 +425,30 @@ The first deployment may take several minutes. The `StaticSiteStack` uses the
 same stack name as the original CDK site stack, so deploy into its existing
 AWS account and region if you already deployed the site.
 
-## 👀 Want to learn more?
+## Music player and Supabase
 
-Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+The home page includes a neon music player above the hero section. It reads
+published rows from `public.songs` and creates Storage URLs using the `music`
+bucket. The SQL schema and read policy are in [`supabase/music.sql`](./supabase/music.sql).
+
+1. Run `supabase/music.sql` in the Supabase SQL Editor.
+2. Create a Storage bucket named `music`. Use paths such as
+   `Adolescents/cover.jpg` and `Adolescents/01-track-title.mp3`.
+3. Add the connection values to a local `.env` file using
+   [`.env.example`](./.env.example):
+
+   ```dotenv
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_KEY=your-publishable-key
+   ```
+
+4. Insert metadata into `public.songs`, leaving `published` as `false` until
+   the tracks and artwork are licensed for public website playback/display.
+5. Set `published` to `true` only for approved rows and run `npm run build`.
+
+This site is deployed statically, so Supabase metadata is read during the
+build. Publishing or changing tracks requires another deployment.
 
 ## Credit
 
-This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).
+This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bear-blog/).
