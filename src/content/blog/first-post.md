@@ -3,6 +3,7 @@ title: 'Physical Media, the Way to Go'
 description: 'How an unexpected poster experiment became a way to turn ideas, frustrations, and curiosities into digital art.'
 pubDate: 'Jul 08 2022'
 author: 'dandar'
+heroImage: '../../assets/background1.png'
 ---
 
 A few months ago, while scrolling through Pinterest, I started wondering if I could recreate some of the graphic designs I saw as posters. My first piece began with an image of a Greek statue. I opened it in Photoshop and started experimenting without a clear end goal. I tend to let an idea lead me, then decide when a piece feels finished. It may seem a little strange, but it works for me.
