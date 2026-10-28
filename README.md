@@ -1,5 +1,9 @@
 # Astro Starter Kit: Blog
 
+[![CI](https://github.com/DandarGaming/cs4421-astro-blog/actions/workflows/ci.yml/badge.svg)](https://github.com/DandarGaming/cs4421-astro-blog/actions/workflows/ci.yml)
+[![Validate site](https://github.com/DandarGaming/cs4421-astro-blog/actions/workflows/deploy-static.yml/badge.svg)](https://github.com/DandarGaming/cs4421-astro-blog/actions/workflows/deploy-static.yml)
+[![Deploy container](https://github.com/DandarGaming/cs4421-astro-blog/actions/workflows/deploy-container.yml/badge.svg)](https://github.com/DandarGaming/cs4421-astro-blog/actions/workflows/deploy-container.yml)
+
 ```sh
 npm create astro@latest -- --template blog
 ```
