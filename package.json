@@ -21,7 +21,7 @@
     "@astrojs/node": "^11.1.9",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.4",
-    "@supabase/supabase-js": "^2.118.0",
+    "@supabase/supabase-js": "^2.119.0",
     "astro": "^7.4.4",
     "aws-cdk-lib": "^2.274.0",
     "constructs": "^10.8.1",
